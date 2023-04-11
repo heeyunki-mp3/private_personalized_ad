@@ -4,13 +4,17 @@ CXX = g++
 CC = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Wshadow -g
 
-user: user.o
+test: test.o user.o ad.o
+
+test.o: test.cpp
 
 user.o: user.cpp
 
+ad.o: ad.cpp
+
 .PHONY: clean
 clean:
-	rm -rf *.o user
+	rm -rf *.o test
 
 .PHONY: all
-all: clean user
+all: clean test
