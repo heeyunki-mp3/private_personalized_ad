@@ -1,9 +1,9 @@
-#ifndef USER_USER_H_
-#define USER_USER_H_
+#ifndef USER_USER_HPP_
+#define USER_USER_HPP_
 
 #include <iostream>
 #include <unordered_map>
-#include "ad.h"
+#include "ad.hpp"
 
 namespace user {
 
@@ -36,4 +36,4 @@ public:
 
 } // namespace user 
 
-#endif // #ifndef USER_USER_H_
+#endif // #ifndef USER_USER_HPP_

@@ -1,12 +1,12 @@
-# Makefile
+# Makefile for test program
 
 CXX = g++
 CC = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Wshadow -g
 
-test: server user ad
+test: test.o user.o ad.o
 
-server.o: server.cpp
+test.o: test.cpp
 
 user.o: user.cpp
 
