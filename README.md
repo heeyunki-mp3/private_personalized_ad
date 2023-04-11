@@ -2,10 +2,14 @@
 
 ## Introduction
 
-## Threat Model
+In this repository, we present a 
 
-## Solution
+For a brief introduction to the design of the system, refer to [this document](./DESIGN.md).
 
-## Assumptions
+### Compiling SEAL
 
-## Usage
+SEAL is a homomorphic encryption library developed by Microsoft. It is the key
+dependency for our PIR system.
+Follow the instructions [here](https://github.com/microsoft/SEAL/tree/4.0.0#getting-started).
+
+### 
