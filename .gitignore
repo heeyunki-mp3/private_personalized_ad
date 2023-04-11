@@ -1,1 +1,2 @@
-#.gitignore
+# Executables and object files
+**/*.o
