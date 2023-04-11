@@ -1,6 +1,8 @@
 # Executables and object files
 **/*.o
 main
+client
+server
 
 # Library files
 *.a
