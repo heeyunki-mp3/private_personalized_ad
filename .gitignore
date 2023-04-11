@@ -6,6 +6,7 @@ main
 *.a
 
 # CMake files
-CMakeCache.txt
-CMakeFiles/
-*.cmake
+**/CMakeCache.txt
+**/CMakeFiles/
+**/*.cmake
+**/Makefile

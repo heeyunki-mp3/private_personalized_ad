@@ -1,5 +1,5 @@
-#ifndef USER_USER_HPP_
-#define USER_USER_HPP_
+#ifndef SRC_USER_HPP_
+#define SRC_USER_HPP_
 
 #include <iostream>
 #include <unordered_map>
@@ -36,4 +36,4 @@ public:
 
 } // namespace user 
 
-#endif // #ifndef USER_USER_HPP_
+#endif // #ifndef SRC_USER_HPP_

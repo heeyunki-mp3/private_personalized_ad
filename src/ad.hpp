@@ -1,5 +1,5 @@
-#ifndef USER_AD_HPP_
-#define USER_AD_HPP_
+#ifndef SRC_AD_HPP_
+#define SRC_AD_HPP_
 
 #include <iostream>
 
@@ -19,4 +19,4 @@ public:
 
 } // namespace user
 
-#endif // #ifndef USER_AD_HPP_
+#endif // #ifndef SRC_AD_HPP_
