@@ -2,6 +2,9 @@
 **/*.o
 main
 
+# Library files
+*.a
+
 # CMake files
 CMakeCache.txt
 CMakeFiles/
