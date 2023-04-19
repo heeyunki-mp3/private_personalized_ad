@@ -13,6 +13,8 @@ typedef std::vector<seal::Plaintext> Database;
 typedef std::vector<std::vector<seal::Ciphertext>> PirQuery;
 typedef std::vector<seal::Ciphertext> PirReply;
 
+namespace sealpir {
+
 struct PirParams {
   bool enable_symmetric;
   bool enable_batching;
@@ -100,3 +102,5 @@ std::string serialize_galoiskeys(seal::Serializable<seal::GaloisKeys> g);
 seal::GaloisKeys *
 deserialize_galoiskeys(std::string s,
                        std::shared_ptr<seal::SEALContext> context);
+
+} // namespace sealpir

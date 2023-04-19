@@ -1,6 +1,7 @@
 # Executables and object files
 **/*.o
-main
+main_user
+main_server
 client
 server
 
@@ -12,3 +13,4 @@ server
 **/CMakeFiles/
 **/*.cmake
 **/Makefile
+**/bin/

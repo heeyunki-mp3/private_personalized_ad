@@ -145,18 +145,18 @@ adpir/fast:
 .PHONY : adpir/fast
 
 # Convenience name for target.
-src/CMakeFiles/main.dir/rule:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/main.dir/rule
-.PHONY : src/CMakeFiles/main.dir/rule
+src/CMakeFiles/main_user.dir/rule:
+	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/main_user.dir/rule
+.PHONY : src/CMakeFiles/main_user.dir/rule
 
 # Convenience name for target.
-main: src/CMakeFiles/main.dir/rule
-.PHONY : main
+main_user: src/CMakeFiles/main_user.dir/rule
+.PHONY : main_user
 
 # fast build rule for target.
-main/fast:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/build
-.PHONY : main/fast
+main_user/fast:
+	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main_user.dir/build.make src/CMakeFiles/main_user.dir/build
+.PHONY : main_user/fast
 
 ad.o: ad.cpp.o
 .PHONY : ad.o
@@ -182,29 +182,29 @@ ad.cpp.s:
 	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.s
 .PHONY : ad.cpp.s
 
-main.o: main.cpp.o
-.PHONY : main.o
+main_user.o: main_user.cpp.o
+.PHONY : main_user.o
 
 # target to build an object file
-main.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.o
-.PHONY : main.cpp.o
+main_user.cpp.o:
+	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main_user.dir/build.make src/CMakeFiles/main_user.dir/main_user.cpp.o
+.PHONY : main_user.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
+main_user.i: main_user.cpp.i
+.PHONY : main_user.i
 
 # target to preprocess a source file
-main.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.i
-.PHONY : main.cpp.i
+main_user.cpp.i:
+	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main_user.dir/build.make src/CMakeFiles/main_user.dir/main_user.cpp.i
+.PHONY : main_user.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+main_user.s: main_user.cpp.s
+.PHONY : main_user.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.s
-.PHONY : main.cpp.s
+main_user.cpp.s:
+	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main_user.dir/build.make src/CMakeFiles/main_user.dir/main_user.cpp.s
+.PHONY : main_user.cpp.s
 
 pir.o: pir.cpp.o
 .PHONY : pir.o
@@ -335,14 +335,14 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... adpir"
-	@echo "... main"
+	@echo "... main_user"
 	@echo "... sealpir"
 	@echo "... ad.o"
 	@echo "... ad.i"
 	@echo "... ad.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... main_user.o"
+	@echo "... main_user.i"
+	@echo "... main_user.s"
 	@echo "... pir.o"
 	@echo "... pir.i"
 	@echo "... pir.s"

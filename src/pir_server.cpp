@@ -7,6 +7,8 @@ using namespace std;
 using namespace seal;
 using namespace seal::util;
 
+namespace sealpir {
+
 PIRServer::PIRServer(const EncryptionParameters &enc_params,
                      const PirParams &pir_params)
     : enc_params_(enc_params), pir_params_(pir_params),
@@ -442,3 +444,5 @@ void PIRServer::set_one_ct(Ciphertext one) {
   one_ = one;
   evaluator_->transform_to_ntt_inplace(one_);
 }
+
+} // namespace sealpir

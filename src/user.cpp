@@ -2,7 +2,12 @@
 
 namespace user {
 
-UserProgram::UserProgram() {
+/* GENERAL */
+
+UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
+                         sealpir::PirParams pirParams) 
+    : pirclient_(encryptionParams, pirParams), 
+      cnts_({{0, 0}, {1, 0}, {2, 0}, {3, 0}}) {
     // Assume the groupings are known to any computer that uses the ad server
     //
     // In our example:
@@ -10,28 +15,18 @@ UserProgram::UserProgram() {
     //      1 -- Book ads
     //      2 -- Sports ads
     //      3 -- Movie ads
-    for (unsigned int i = 0; i < 4; ++i)
-        cnts_[i] = 0;
 }
 
 UserProgram::~UserProgram() {
     // Nothing to do here
 }
 
-unsigned int UserProgram::getGroupFromAdNumber(unsigned int no) {
-    // Assume this mapping is known to any computer that uses the ad server
-    //
-    // In our example:
-    //      0-99: Ad group 0
-    //      100-199: Ad group 1
-    //      200-299: Ad group 2
-    //      300-399: Ad group 3
-    return no / 100;
-}
-
-void UserProgram::run() {
+void UserProgram::_run(ModeType modeType) {
     // Obtain initial ad set
-    obtainInitialAdSet();
+    if (modeType == local)
+        obtainInitialAdSetLocal();
+    else
+        obtainInitialAdSetServer();
 
     // Runs forever
     unsigned int userSelection;
@@ -53,28 +48,41 @@ void UserProgram::run() {
         }
 
         // Update cnt_
-        updateCnts(userSelection);
-        updateAdSet();
+        updateCntsFromUserSelection(userSelection);
+        if (modeType == local)
+            updateAdSetLocal();
+        else
+            updateAdSetServer();
         printCnts();    // For testing
     }
 }
 
+void UserProgram::runLocal() {
+    ModeType modeType = local;
+    _run(modeType);
+}
+
+void UserProgram::runServer(char *hostname, char *port) {
+    doSetup(hostname, port);
+    ModeType modeType = server;
+    _run(modeType);
+}
+
+/* UTILITY FUNCTIONS */
+
+unsigned int UserProgram::getGroupFromAdNumber(unsigned int no) {
+    // Assume this mapping is known to any computer that uses the ad server
+    //
+    // In our example:
+    //      0-99: Ad group 0
+    //      100-199: Ad group 1
+    //      200-299: Ad group 2
+    //      300-399: Ad group 3
+    return no / 100;
+}
+
 uint64_t UserProgram::generateRandomInt64() {
     return 0;
-}
-
-void UserProgram::obtainInitialAdSet() {
-    // TODO: Use SealPIR to update currAds_
-    // Currently, we just add one ad for each category
-    for (unsigned int i = 0; i < 400; i += 100) {
-        Advertisement ad(generateRandomInt64());
-        currAds_.insert({ i, ad });
-    }
-}
-
-void UserProgram::updateAdSet() {
-    // TODO: Use SealPIR to update currAds_
-    // Currently, we don't make any updates
 }
 
 unsigned int UserProgram::getMostPopularAdGroup() {
@@ -92,8 +100,42 @@ unsigned int UserProgram::getMostPopularAdGroup() {
     return mostPopularGrp;
 }
 
-void UserProgram::updateCnts(unsigned int userSelection) {
+void UserProgram::updateCntsFromUserSelection(unsigned int userSelection) {
     ++cnts_[getGroupFromAdNumber(userSelection)];
+}
+
+/* FOR INTERFACING WITH SERVER */
+
+void UserProgram::obtainInitialAdSetServer() {
+
+}   
+
+void UserProgram::updateAdSetServer() {
+
+}
+
+void UserProgram::doSetup(char *hostname, char *port) {
+    int sockfd, portno, n;
+	struct sockaddr_in serv_addr;
+	struct hostent *server;
+	char buffer[256];
+
+    portno = atoi(argv[2]);
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+}
+
+/* FOR LOCAL TESTING */
+
+void UserProgram::obtainInitialAdSetLocal() {
+    // Add one ad for each category
+    for (unsigned int i = 0; i < 400; i += 100) {
+        Advertisement ad(generateRandomInt64());
+        currAds_.insert({ i, ad });
+    }
+}
+
+void UserProgram::updateAdSetLocal() {
+    // We don't make any updates when testing locally
 }
 
 void UserProgram::printCnts() {

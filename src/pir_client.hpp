@@ -8,6 +8,8 @@
 
 using namespace std;
 
+namespace sealpir {
+
 class PIRClient {
 public:
   PIRClient(const seal::EncryptionParameters &encparms,
@@ -58,3 +60,5 @@ private:
 
   friend class PIRServer;
 };
+
+} // namespace sealpir

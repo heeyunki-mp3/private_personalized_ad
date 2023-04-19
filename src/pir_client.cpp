@@ -6,6 +6,8 @@ using namespace std;
 using namespace seal;
 using namespace seal::util;
 
+namespace sealpir {
+
 PIRClient::PIRClient(const EncryptionParameters &enc_params,
                      const PirParams &pir_params)
     : enc_params_(enc_params), pir_params_(pir_params) {
@@ -289,3 +291,5 @@ Ciphertext PIRClient::get_one() {
   }
   return ct;
 }
+
+} // namespace sealpir
