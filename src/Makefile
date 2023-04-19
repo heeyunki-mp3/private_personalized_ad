@@ -48,19 +48,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /opt/homebrew/Cellar/cmake/3.26.0/bin/cmake
+CMAKE_COMMAND = /usr/local/Cellar/cmake/3.26.3/bin/cmake
 
 # The command to remove a file.
-RM = /opt/homebrew/Cellar/cmake/3.26.0/bin/cmake -E rm -f
+RM = /usr/local/Cellar/cmake/3.26.3/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad"
+CMAKE_SOURCE_DIR = /Users/heeyunkim/private_personalized_ad
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad"
+CMAKE_BINARY_DIR = /Users/heeyunkim/private_personalized_ad
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -68,7 +68,7 @@ CMAKE_BINARY_DIR = "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_perso
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/opt/homebrew/Cellar/cmake/3.26.0/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/local/Cellar/cmake/3.26.3/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -78,7 +78,7 @@ edit_cache/fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/opt/homebrew/Cellar/cmake/3.26.0/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/local/Cellar/cmake/3.26.3/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(CMAKE_COMMAND) -E cmake_progress_start "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad/CMakeFiles" "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad/src//CMakeFiles/progress.marks"
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad/CMakeFiles" 0
+	cd /Users/heeyunkim/private_personalized_ad && $(CMAKE_COMMAND) -E cmake_progress_start /Users/heeyunkim/private_personalized_ad/CMakeFiles /Users/heeyunkim/private_personalized_ad/src//CMakeFiles/progress.marks
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/heeyunkim/private_personalized_ad/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/clean
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,22 +103,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/preinstall
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/preinstall
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /Users/heeyunkim/private_personalized_ad && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/CMakeFiles/sealpir.dir/rule:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/sealpir.dir/rule
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/sealpir.dir/rule
 .PHONY : src/CMakeFiles/sealpir.dir/rule
 
 # Convenience name for target.
@@ -127,12 +127,12 @@ sealpir: src/CMakeFiles/sealpir.dir/rule
 
 # fast build rule for target.
 sealpir/fast:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/build
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/build
 .PHONY : sealpir/fast
 
 # Convenience name for target.
 src/CMakeFiles/adpir.dir/rule:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/adpir.dir/rule
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/adpir.dir/rule
 .PHONY : src/CMakeFiles/adpir.dir/rule
 
 # Convenience name for target.
@@ -141,12 +141,12 @@ adpir: src/CMakeFiles/adpir.dir/rule
 
 # fast build rule for target.
 adpir/fast:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/build
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/build
 .PHONY : adpir/fast
 
 # Convenience name for target.
 src/CMakeFiles/main.dir/rule:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/main.dir/rule
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/main.dir/rule
 .PHONY : src/CMakeFiles/main.dir/rule
 
 # Convenience name for target.
@@ -155,7 +155,7 @@ main: src/CMakeFiles/main.dir/rule
 
 # fast build rule for target.
 main/fast:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/build
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/build
 .PHONY : main/fast
 
 ad.o: ad.cpp.o
@@ -163,7 +163,7 @@ ad.o: ad.cpp.o
 
 # target to build an object file
 ad.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.o
 .PHONY : ad.cpp.o
 
 ad.i: ad.cpp.i
@@ -171,7 +171,7 @@ ad.i: ad.cpp.i
 
 # target to preprocess a source file
 ad.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.i
 .PHONY : ad.cpp.i
 
 ad.s: ad.cpp.s
@@ -179,7 +179,7 @@ ad.s: ad.cpp.s
 
 # target to generate assembly for a file
 ad.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.s
 .PHONY : ad.cpp.s
 
 main.o: main.cpp.o
@@ -187,7 +187,7 @@ main.o: main.cpp.o
 
 # target to build an object file
 main.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -195,7 +195,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -203,7 +203,7 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/main.cpp.s
 .PHONY : main.cpp.s
 
 pir.o: pir.cpp.o
@@ -211,7 +211,7 @@ pir.o: pir.cpp.o
 
 # target to build an object file
 pir.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir.cpp.o
 .PHONY : pir.cpp.o
 
 pir.i: pir.cpp.i
@@ -219,7 +219,7 @@ pir.i: pir.cpp.i
 
 # target to preprocess a source file
 pir.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir.cpp.i
 .PHONY : pir.cpp.i
 
 pir.s: pir.cpp.s
@@ -227,7 +227,7 @@ pir.s: pir.cpp.s
 
 # target to generate assembly for a file
 pir.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir.cpp.s
 .PHONY : pir.cpp.s
 
 pir_client.o: pir_client.cpp.o
@@ -235,7 +235,7 @@ pir_client.o: pir_client.cpp.o
 
 # target to build an object file
 pir_client.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_client.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_client.cpp.o
 .PHONY : pir_client.cpp.o
 
 pir_client.i: pir_client.cpp.i
@@ -243,7 +243,7 @@ pir_client.i: pir_client.cpp.i
 
 # target to preprocess a source file
 pir_client.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_client.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_client.cpp.i
 .PHONY : pir_client.cpp.i
 
 pir_client.s: pir_client.cpp.s
@@ -251,7 +251,7 @@ pir_client.s: pir_client.cpp.s
 
 # target to generate assembly for a file
 pir_client.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_client.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_client.cpp.s
 .PHONY : pir_client.cpp.s
 
 pir_server.o: pir_server.cpp.o
@@ -259,7 +259,7 @@ pir_server.o: pir_server.cpp.o
 
 # target to build an object file
 pir_server.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_server.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_server.cpp.o
 .PHONY : pir_server.cpp.o
 
 pir_server.i: pir_server.cpp.i
@@ -267,7 +267,7 @@ pir_server.i: pir_server.cpp.i
 
 # target to preprocess a source file
 pir_server.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_server.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_server.cpp.i
 .PHONY : pir_server.cpp.i
 
 pir_server.s: pir_server.cpp.s
@@ -275,7 +275,7 @@ pir_server.s: pir_server.cpp.s
 
 # target to generate assembly for a file
 pir_server.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_server.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/sealpir.dir/build.make src/CMakeFiles/sealpir.dir/pir_server.cpp.s
 .PHONY : pir_server.cpp.s
 
 server.o: server.cpp.o
@@ -283,7 +283,7 @@ server.o: server.cpp.o
 
 # target to build an object file
 server.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.o
 .PHONY : server.cpp.o
 
 server.i: server.cpp.i
@@ -291,7 +291,7 @@ server.i: server.cpp.i
 
 # target to preprocess a source file
 server.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.i
 .PHONY : server.cpp.i
 
 server.s: server.cpp.s
@@ -299,7 +299,7 @@ server.s: server.cpp.s
 
 # target to generate assembly for a file
 server.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.s
 .PHONY : server.cpp.s
 
 user.o: user.cpp.o
@@ -307,7 +307,7 @@ user.o: user.cpp.o
 
 # target to build an object file
 user.cpp.o:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/user.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/user.cpp.o
 .PHONY : user.cpp.o
 
 user.i: user.cpp.i
@@ -315,7 +315,7 @@ user.i: user.cpp.i
 
 # target to preprocess a source file
 user.cpp.i:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/user.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/user.cpp.i
 .PHONY : user.cpp.i
 
 user.s: user.cpp.s
@@ -323,7 +323,7 @@ user.s: user.cpp.s
 
 # target to generate assembly for a file
 user.cpp.s:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/user.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/user.cpp.s
 .PHONY : user.cpp.s
 
 # Help Target
@@ -369,6 +369,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd "/Users/ryanwee/Desktop/S23 Assignments/Privacy/private_personalized_ad" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /Users/heeyunkim/private_personalized_ad && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
