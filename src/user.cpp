@@ -114,6 +114,7 @@ void UserProgram::updateAdSetServer() {
 
 }
 
+// References source code at https://www.linuxhowtos.org/C_C++/socket.htm
 void UserProgram::doSetup(char *hostname, char *port) {
     int sockfd, portno, n;
 	struct sockaddr_in serv_addr;
