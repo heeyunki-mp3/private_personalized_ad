@@ -12,3 +12,6 @@ target_link_libraries(main adpir)
 
 add_executable(server server.cpp)
 target_link_libraries(server adpir)
+
+add_executable(client dummy_user.cpp)
+target_link_libraries(client adpir)

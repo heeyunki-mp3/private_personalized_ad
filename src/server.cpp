@@ -25,6 +25,45 @@ void error(const char *msg)
 	perror(msg);
 	exit(1);
 }
+void hexDump(void *addr, int len) 
+{
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+                printf("  %s\n", buff);
+
+            // Output the offset.
+            printf("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        printf(" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e)) {
+            buff[i % 16] = '.';
+        } else {
+            buff[i % 16] = pc[i];
+        }
+
+        buff[(i % 16) + 1] = '\0';
+    }
+    // Pad out last line if not exactly 16 characters.
+    while ((i % 16) != 0) {
+        printf("   ");
+        i++;
+    }
+    // And print the final ASCII bit.
+    printf("  %s\n", buff);
+}
 
 std::string SEALSerialize(const GaloisKeys& sealobj) {
     std::stringstream stream;
@@ -165,7 +204,9 @@ int main(int argc, char *argv[])
 		if (n < 0)
 			error("ERROR reading from socket");
 		printf("Client input: %s\n", buffer);
-        
+        for (int i=0; i<n; i++){
+            printf("Client input: %c\n", buffer[i]);
+        }
 		// TODO: buffer is the communication from the user
         if (strcmp(buffer, "connect") == 0){
             std::cout << "Registering" << endl;
@@ -176,25 +217,37 @@ int main(int argc, char *argv[])
         }
 		//TODO: figure out if this serialization works
         // sending encrypt param and PIR param in char array
+        std::cout << "Main: copying the parameters"<< "size of enc param: "<<sizeof(enc_params)<< " size of pir param: "<<sizeof(pir_params)<<endl;
+        
         bzero(buffer_sending, 256);
         ::memcpy(buffer_sending, &enc_params, sizeof(enc_params));
         ::memcpy(buffer_sending+sizeof(enc_params), &pir_params, sizeof(pir_params));
-        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params), "\n\0",2);
+        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params), "\r\n\0",2);
+        std::cout << "Socket: sending the parameters"<< endl;
+        hexDump( buffer_sending,  sizeof(enc_params)+sizeof(pir_params)+2);
 		send(newsockfd, buffer_sending, sizeof(enc_params)+sizeof(pir_params)+3, 0);
+        std::cout << "Socket: sent"<< endl;
 
         //reads Galois key from client
+        std::cout << "Socket: reading Galois key from client"<< endl;
+
         bzero(buffer, 256);
 		n = read(newsockfd, buffer, 255);
 		if (n < 0)
 			error("ERROR reading from socket"); 
+        std::cout << "Socket: done reading Galois key from client"<< endl;
 
         ::memcpy(galois_keys, buffer, sizeof(GaloisKeys));
-        
+        std::cout << "Main: copied Galois key from client"<< endl;
+
         // Set galois key for client with id 0
         std::cout << "Main: Setting Galois keys...";
         server.set_galois_key(0, *(GaloisKeys *) galois_keys); 
         std::cout << "Main: Done initializing the user!!!!! YAY"<< endl;
 
+
+        // ack the client that it is done initializing
+        send(newsockfd, "ACK", 4, 0);
 
         n = read(newsockfd, buffer, 255);
 		if (n < 0)

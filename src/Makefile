@@ -172,6 +172,20 @@ server/fast:
 	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/server.dir/build.make src/CMakeFiles/server.dir/build
 .PHONY : server/fast
 
+# Convenience name for target.
+src/CMakeFiles/client.dir/rule:
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/client.dir/rule
+.PHONY : src/CMakeFiles/client.dir/rule
+
+# Convenience name for target.
+client: src/CMakeFiles/client.dir/rule
+.PHONY : client
+
+# fast build rule for target.
+client/fast:
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/client.dir/build.make src/CMakeFiles/client.dir/build
+.PHONY : client/fast
+
 ad.o: ad.cpp.o
 .PHONY : ad.o
 
@@ -195,6 +209,30 @@ ad.s: ad.cpp.s
 ad.cpp.s:
 	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/ad.cpp.s
 .PHONY : ad.cpp.s
+
+dummy_user.o: dummy_user.cpp.o
+.PHONY : dummy_user.o
+
+# target to build an object file
+dummy_user.cpp.o:
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/client.dir/build.make src/CMakeFiles/client.dir/dummy_user.cpp.o
+.PHONY : dummy_user.cpp.o
+
+dummy_user.i: dummy_user.cpp.i
+.PHONY : dummy_user.i
+
+# target to preprocess a source file
+dummy_user.cpp.i:
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/client.dir/build.make src/CMakeFiles/client.dir/dummy_user.cpp.i
+.PHONY : dummy_user.cpp.i
+
+dummy_user.s: dummy_user.cpp.s
+.PHONY : dummy_user.s
+
+# target to generate assembly for a file
+dummy_user.cpp.s:
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/client.dir/build.make src/CMakeFiles/client.dir/dummy_user.cpp.s
+.PHONY : dummy_user.cpp.s
 
 main.o: main.cpp.o
 .PHONY : main.o
@@ -352,12 +390,16 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... adpir"
+	@echo "... client"
 	@echo "... main"
 	@echo "... sealpir"
 	@echo "... server"
 	@echo "... ad.o"
 	@echo "... ad.i"
 	@echo "... ad.s"
+	@echo "... dummy_user.o"
+	@echo "... dummy_user.i"
+	@echo "... dummy_user.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
