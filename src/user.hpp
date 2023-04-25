@@ -13,8 +13,11 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
+
 #include "ad.hpp"
 #include "pir_client.hpp"
+
 #include <boost/log/trivial.hpp>
 
 namespace user {
@@ -47,7 +50,6 @@ public:
 
     /* Utility functions */
     unsigned int getGroupFromAdNumber(unsigned int);
-    uint64_t generateRandomInt64();
     unsigned int getMostPopularAdGroup();
     void updateCntsFromUserSelection(unsigned int);
 

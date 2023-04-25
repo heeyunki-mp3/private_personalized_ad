@@ -7,7 +7,7 @@ namespace user {
 UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
                          sealpir::PirParams pirParams) 
     : pirclient_(encryptionParams, pirParams), 
-      cnts_({{0, 0}, {1, 0}, {2, 0}, {3, 0}}) {
+      cnts_({}) {
     // Assume the groupings are known to any computer that uses the ad server
     //
     // In our example:
@@ -15,6 +15,10 @@ UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
     //      1 -- Book ads
     //      2 -- Sports ads
     //      3 -- Movie ads
+    //      ...
+    //      49 -- Toy ads
+    for (int i = 0; i < 50; ++i)
+        cnts_[i] = 0;
 }
 
 UserProgram::~UserProgram() {
@@ -78,10 +82,6 @@ unsigned int UserProgram::getGroupFromAdNumber(unsigned int no) {
     //      200-299: Ad group 2
     //      300-399: Ad group 3
     return no / 100;
-}
-
-uint64_t UserProgram::generateRandomInt64() {
-    return 0;
 }
 
 unsigned int UserProgram::getMostPopularAdGroup() {
@@ -153,29 +153,127 @@ void UserProgram::doSocketConnection(char *hostname, char *port) {
 
 void UserProgram::doEncryptionSetup() {
     int nBytes;
+    seal::EncryptionParameters encryptionParams;
+    sealpir::PirParams pirParams;
+    seal::GaloisKeys galois_keys;
+    char buf[256];
+    std::string paramString = "";
+
+    void *enc_param_buffer = malloc(sizeof(seal::EncryptionParameters));
+	void *pir_param_buffer = malloc(sizeof(sealpir::PirParams));
+    if (!enc_param_buffer || !pir_param_buffer)
+        goto error_cleanup;
     
     // Tell server we want to do the encryption setup
     nBytes = write(socketfd_, "connect", 7);
-	if (nBytes < 0)
+	if (nBytes < 0) {
 		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"connect\" to socket";
+        goto error_cleanup;
+    }
 
+    // Read parameters from server
+    // Encryption parameters first, PIR parameters after
+    while((nBytes = read(socketfd_, buf, 255)) == 255) {
+        paramString.append(buf);
+    }
+    paramString.append(buf);
+    BOOST_LOG_TRIVIAL(info) << "Client: Obtained paramString from server";
+
+    // Deserialize parameters
+    // TODO: WHY BUF?
+    std::memcpy(enc_param_buffer, buf, sizeof(seal::EncryptionParameters));
+	std::memcpy(pir_param_buffer, buf + sizeof(seal::EncryptionParameters), sizeof(sealpir::PirParams));
+
+    // Initialize PIRClient instance
+    pirclient_ = sealpir::PIRClient(*((seal::EncryptionParameters *) enc_param_buffer), *((sealpir::PirParams *) pir_param_buffer));
+    BOOST_LOG_TRIVIAL(info) << "Client: Initialized PIRClient with actual params";
+
+    // Generate galois keys
+    galois_keys = pirclient_.generate_galois_keys();
+
+    // Send galois keys to server
+    bzero(buf, 256);
+    std::memcpy(buf, &galois_keys, sizeof(seal::GaloisKeys));
+    nBytes = write(socketfd_, buf, sizeof(seal::GaloisKeys));
+    if (nBytes != sizeof(seal::GaloisKeys)) {
+        BOOST_LOG_TRIVIAL(error) << "Client: Could not send galois keys to server";
+        goto error_cleanup;
+    }
+
+    // Check if server acknowledged
+    nBytes = read(socketfd_, buf, 255);
+	if (buf[0] != 'A' || buf[0] != 'C' || buf[0] != 'K') {
+		BOOST_LOG_TRIVIAL(error) << "Client: Server did not ACK encryption setup";
+        goto error_cleanup;
+	}
+
+    BOOST_LOG_TRIVIAL(info) << "Client: Encryption setup complete";
+    return;
+
+error_cleanup:
+    if (enc_param_buffer) free(enc_param_buffer);
+    if (pir_param_buffer) free(pir_param_buffer);
+    close(socketfd_);
+    BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
+    exit(0);
 }
 
 void UserProgram::obtainInitialAdSetServer() {
-    int nBytes;
+    int nBytes, startByte;
+    char buf[512], tmpad[33], tmpno[6];
     
     // Tell server we want to obtain the initial ad set
     nBytes = write(socketfd_, "obtain", 6);
-	if (nBytes < 0)
+	if (nBytes < 0) {
 		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"obtain\" to socket";
-}   
+        exit(0);
+    }
+
+    // Read initial ad set from server
+    nBytes = read(socketfd_, buf, 512);
+    if (nBytes < 370) {         // 32 bytes for ad, 5 bytes for ad number
+        BOOST_LOG_TRIVIAL(error) << "Client: Could not read initial ad set from server";
+        exit(0);
+    }
+
+    // Set up initial ad set
+    vector<Advertisement> ads;  // Ordered
+    vector<unsigned int> adNos; // Ordered
+
+    // Parse advertisemeent
+    for (int i = 0; i < 10; ++i) {
+        startByte = i * 32;
+        bzero(tmpad, 33);
+        for (int j = 0; j < 32; ++j)
+            tmpad[j] = buf[startByte + j];
+        Advertisement ad(tmpad);
+        ads.push_back(ad);
+    }
+
+    // Parse ad numbers
+    for (int i = 0; i < 10; ++i) {
+        startByte = 320 + i * 5;
+        bzero(tmpno, 6);
+        for (int j = 0; j < 6; ++j)
+            tmpno[j] = buf[startByte + j];
+        unsigned int adNo = (unsigned int) atoi(tmpno);
+        adNos.push_back(adNo);
+    }
+
+    // Fill currAds_
+    for (int i = 0; i < 10; ++i)
+        currAds_.insert({ adNos[i], ads[i] });
+
+    BOOST_LOG_TRIVIAL(info) << "Client: Initial ad set obtained";
+}
 
 /* FOR LOCAL TESTING */
 
 void UserProgram::obtainInitialAdSetLocal() {
     // Add one ad for each category
     for (unsigned int i = 0; i < 400; i += 100) {
-        Advertisement ad(generateRandomInt64());
+        const char *adString = "abcdefghijklmnopqrstuvwxyzabcdef";  // 32 chars
+        Advertisement ad(adString);
         currAds_.insert({ i, ad });
     }
 }
