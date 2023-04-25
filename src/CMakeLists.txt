@@ -9,3 +9,6 @@ target_link_libraries(adpir sealpir)
 
 add_executable(main main.cpp)
 target_link_libraries(main adpir)
+
+add_executable(server server.cpp)
+target_link_libraries(server adpir)

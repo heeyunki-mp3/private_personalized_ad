@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Initialize PIR Server
-	cout << "Main: Initializing server and client" << endl;
+	cout << "Main: Initializing pir server" << endl;
 	PIRServer server(enc_params, pir_params);
 
     GaloisKeys *galois_keys = malloc(sizeof(GaloisKeys));
@@ -101,18 +101,6 @@ int main(int argc, char *argv[])
 	server.set_database(move(db), number_of_items, size_per_item);
 	server.preprocess_database();
 	cout << "Main: database pre processed " << endl;
-
-/* CLIENT WORKS:
-	// Choose an index of an element in the DB
-	uint64_t ele_index = rd() % number_of_items; // element in DB at random position
-	uint64_t index = client.get_fv_index(ele_index); // index of FV plaintext
-	uint64_t offset = client.get_fv_offset(ele_index); // offset in FV plaintext
-	cout << "Main: element index = " << ele_index << " from [0, "
-	     << number_of_items - 1 << "]" << endl;
-	cout << "Main: FV index = " << index << ", FV offset = " << offset << endl;
-    PirQuery query = client.generate_query(index); // TODO: client side generates this
-
-*/
 
 
 	//------------------------server socket-------------------------
@@ -178,6 +166,7 @@ int main(int argc, char *argv[])
             cout <<"Wrong request" <<endl;
             continue;
         }
+		//TODO: figure out if this serialization works
         // sending encrypt param and PIR param in char array
         bzero(buffer_sending, 256);
         memcpy(buffer_sending, &enc_param, sizeof(enc_param));
@@ -190,6 +179,7 @@ int main(int argc, char *argv[])
 		n = read(newsockfd, buffer, 255);
 		if (n < 0)
 			error("ERROR reading from socket"); 
+
         memcpy(galois_keys, buffer, sizeof(GaloisKeys));
         
         // Set galois key for client with id 0

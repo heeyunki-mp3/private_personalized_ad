@@ -158,6 +158,20 @@ main/fast:
 	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/main.dir/build.make src/CMakeFiles/main.dir/build
 .PHONY : main/fast
 
+# Convenience name for target.
+src/CMakeFiles/server.dir/rule:
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/server.dir/rule
+.PHONY : src/CMakeFiles/server.dir/rule
+
+# Convenience name for target.
+server: src/CMakeFiles/server.dir/rule
+.PHONY : server
+
+# fast build rule for target.
+server/fast:
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/server.dir/build.make src/CMakeFiles/server.dir/build
+.PHONY : server/fast
+
 ad.o: ad.cpp.o
 .PHONY : ad.o
 
@@ -284,6 +298,7 @@ server.o: server.cpp.o
 # target to build an object file
 server.cpp.o:
 	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.o
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/server.dir/build.make src/CMakeFiles/server.dir/server.cpp.o
 .PHONY : server.cpp.o
 
 server.i: server.cpp.i
@@ -292,6 +307,7 @@ server.i: server.cpp.i
 # target to preprocess a source file
 server.cpp.i:
 	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.i
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/server.dir/build.make src/CMakeFiles/server.dir/server.cpp.i
 .PHONY : server.cpp.i
 
 server.s: server.cpp.s
@@ -300,6 +316,7 @@ server.s: server.cpp.s
 # target to generate assembly for a file
 server.cpp.s:
 	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/adpir.dir/build.make src/CMakeFiles/adpir.dir/server.cpp.s
+	cd /Users/heeyunkim/private_personalized_ad && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/server.dir/build.make src/CMakeFiles/server.dir/server.cpp.s
 .PHONY : server.cpp.s
 
 user.o: user.cpp.o
@@ -337,6 +354,7 @@ help:
 	@echo "... adpir"
 	@echo "... main"
 	@echo "... sealpir"
+	@echo "... server"
 	@echo "... ad.o"
 	@echo "... ad.i"
 	@echo "... ad.s"
