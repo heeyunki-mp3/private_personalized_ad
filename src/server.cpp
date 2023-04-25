@@ -65,6 +65,33 @@ void hexDump(void *addr, int len)
     printf("  %s\n", buff);
 }
 
+
+template<typename POD>
+std::ostream& serialize_vector(std::ostream& os, std::vector<POD> const& v)
+{
+    // this only works on built in data types (PODs)
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only serialize POD types with this function");
+
+    auto size = v.size();
+    os.write(reinterpret_cast<char const*>(&size), sizeof(size));
+    os.write(reinterpret_cast<char const*>(v.data()), v.size() * sizeof(POD));
+    return os;
+}
+
+template<typename POD>
+std::istream& deserialize_vector(std::istream& is, std::vector<POD>& v)
+{
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only deserialize POD types with this function");
+
+    decltype(v.size()) size;
+    is.read(reinterpret_cast<char*>(&size), sizeof(size));
+    v.resize(size);
+    is.read(reinterpret_cast<char*>(v.data()), v.size() * sizeof(POD));
+    return is;
+}
+
 std::string SEALSerialize(const GaloisKeys& sealobj) {
     std::stringstream stream;
     sealobj.save(stream);
@@ -218,10 +245,14 @@ int main(int argc, char *argv[])
 		//TODO: figure out if this serialization works
         // sending encrypt param and PIR param in char array
         std::cout << "Main: copying the parameters"<< "size of enc param: "<<sizeof(enc_params)<< " size of pir param: "<<sizeof(pir_params)<<endl;
-        
+        std::cout<< "pir param"<<endl;
+        hexDump(&pir_params,sizeof(PirParams));
         bzero(buffer_sending, 256);
         ::memcpy(buffer_sending, &enc_params, sizeof(enc_params));
         ::memcpy(buffer_sending+sizeof(enc_params), &pir_params, sizeof(pir_params));
+
+        serialize_vector()
+        // serialize vector
         ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params), "\r\n\0",2);
         std::cout << "Socket: sending the parameters"<< endl;
         hexDump( buffer_sending,  sizeof(enc_params)+sizeof(pir_params)+2);
