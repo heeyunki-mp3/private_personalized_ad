@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
     sealpir::gen_encryption_params(N, logt, enc_params);
     sealpir::verify_encryption_params(enc_params);
     gen_pir_params(number_of_items, size_per_item, d, enc_params, pir_params);
-    std::cout << "Dummy parameters generated\n";
+    BOOST_LOG_TRIVIAL(info) << "Dummy parameters generated";
 
     // Initialize and run user program
     user::UserProgram program(enc_params, pir_params);

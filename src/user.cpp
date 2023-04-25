@@ -23,10 +23,9 @@ UserProgram::~UserProgram() {
 
 void UserProgram::_run(ModeType modeType) {
     // Obtain initial ad set
+    // This is already done in doSetup() if running with server
     if (modeType == local)
         obtainInitialAdSetLocal();
-    else
-        obtainInitialAdSetServer();
 
     // Runs forever
     unsigned int userSelection;
@@ -106,17 +105,17 @@ void UserProgram::updateCntsFromUserSelection(unsigned int userSelection) {
 
 /* FOR INTERFACING WITH SERVER */
 
-void UserProgram::obtainInitialAdSetServer() {
-
-}   
-
 void UserProgram::updateAdSetServer() {
 
 }
 
+/* FOR SETUP WITH SERVER */
+
 void UserProgram::doSetup(char *hostname, char *port) {
-   // Set up socket connection
-   doSocketConnection(hostname, port);
+    // Set up socket connection
+    doSocketConnection(hostname, port);
+    doEncryptionSetup();
+    obtainInitialAdSetServer();
 }
 
 // References source code at https://www.linuxhowtos.org/C_C++/socket.htm
@@ -128,12 +127,12 @@ void UserProgram::doSocketConnection(char *hostname, char *port) {
     portno = atoi(port);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-		fprintf(stderr, "ERROR: Client: Could not open socket\n");
+		BOOST_LOG_TRIVIAL(error) << "Client: Could not open socket";
         exit(0);
     }
 	server = gethostbyname(hostname);
 	if (server == NULL) {
-		fprintf(stderr, "ERROR: Client: No such host\n");
+		BOOST_LOG_TRIVIAL(error) << "Client: No such host";
 		exit(0);
 	}
     bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -143,14 +142,33 @@ void UserProgram::doSocketConnection(char *hostname, char *port) {
 	      server->h_length);
 	serv_addr.sin_port = htons(portno);
 	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		fprintf(stderr, "ERROR: Client: Could not connect to server socket\n");
+		BOOST_LOG_TRIVIAL(error) << "Client: Could not connect to server socket";
         exit(0);
     }
 
     // Update socketfd 
     socketfd_ = sockfd;
-    std::cout << "Connection successful!\n";
+    BOOST_LOG_TRIVIAL(info) << "Client: Initial connection successful!";
 }
+
+void UserProgram::doEncryptionSetup() {
+    int nBytes;
+    
+    // Tell server we want to do the encryption setup
+    nBytes = write(socketfd_, "connect", 7);
+	if (nBytes < 0)
+		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"connect\" to socket";
+
+}
+
+void UserProgram::obtainInitialAdSetServer() {
+    int nBytes;
+    
+    // Tell server we want to obtain the initial ad set
+    nBytes = write(socketfd_, "obtain", 6);
+	if (nBytes < 0)
+		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"obtain\" to socket";
+}   
 
 /* FOR LOCAL TESTING */
 

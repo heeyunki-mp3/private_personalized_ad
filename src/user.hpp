@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include "ad.hpp"
 #include "pir_client.hpp"
+#include <boost/log/trivial.hpp>
 
 namespace user {
 
@@ -50,11 +51,14 @@ public:
     unsigned int getMostPopularAdGroup();
     void updateCntsFromUserSelection(unsigned int);
 
-    /* For interfacing with server */
-    void obtainInitialAdSetServer();     
+    /* For interfacing with server */   
     void updateAdSetServer();
+
+    /* For setup with server */
     void doSetup(char *hostname, char *port);
     void doSocketConnection(char *hostname, char *port);
+    void doEncryptionSetup();
+    void obtainInitialAdSetServer();  
 
     /* For local testing */
     void obtainInitialAdSetLocal();
