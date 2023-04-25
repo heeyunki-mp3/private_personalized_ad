@@ -34,6 +34,7 @@ private:
     std::unordered_map<unsigned int, unsigned int> cnts_;       // K: Ad group, V: Number clicks
     std::unordered_map<unsigned int, Advertisement> currAds_;   // K: Ad number, V: Ad
     sealpir::PIRClient pirclient_;
+    int socketfd_;
 
 public:
     /* General */
@@ -41,7 +42,7 @@ public:
     ~UserProgram();
     void _run(ModeType modeType);                           // Not exposed
     void runLocal();                                        // Exposed
-    void runServer(char *hostname, char *port);             // Exposed
+    void runWithServer(char *hostname, char *port);         // Exposed
 
     /* Utility functions */
     unsigned int getGroupFromAdNumber(unsigned int);
@@ -53,6 +54,7 @@ public:
     void obtainInitialAdSetServer();     
     void updateAdSetServer();
     void doSetup(char *hostname, char *port);
+    void doSocketConnection(char *hostname, char *port);
 
     /* For local testing */
     void obtainInitialAdSetLocal();
