@@ -64,21 +64,57 @@ void hexDump(void *addr, int len)
     // And print the final ASCII bit.
     printf("  %s\n", buff);
 }
+/**
+ * serialization:
+ * /------sizeof(unsigned long) * 2 -------/
+ *   [size of vector]  [size of element]  [element 1][element 2]...
+ * 
+*/
+template<typename POD>
+std::vector<POD>& deserialize_vector(std::vector<POD> vec, char *buffer){
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only deserialize POD types with this function");
+    unsigned long size;
+    unsigned long ele_size;
+    int offset = 0;
+
+    memcpy(&size, buffer, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    memcpy(&ele_size, buffer+offset, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+
+    for (int i=0; i<size; i++) {
+        POD element_hold;
+        memcpy(&element_hold, buffer + offset, ele_size);
+        offset += ele_size;
+        vec.push_back(element_hold);
+    }
+    return vec;
+}
+template<typename POD>
+void serialize_vector(std::vector<POD> vec, char *buffer){
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only serialize POD types with this function");
+    unsigned long size = vec.size();
+    unsigned long ele_size = sizeof(vec[0]);
+    int offset = 0;
+    memcpy(buffer, &size, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    memcpy(buffer+offset, &ele_size, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    for (auto element : vec) {
+        memcpy(buffer+offset, &element, ele_size);
+        offset += ele_size;
+    }
+}
 
 
 template<typename POD>
-std::ostream& serialize_vector(std::ostream& os, std::vector<POD> const& v)
-{
-    // this only works on built in data types (PODs)
-    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
-        "Can only serialize POD types with this function");
-
-    auto size = v.size();
-    os.write(reinterpret_cast<char const*>(&size), sizeof(size));
-    os.write(reinterpret_cast<char const*>(v.data()), v.size() * sizeof(POD));
-    return os;
+unsigned long get_size_of_serialized_vector(std::vector<POD> const& v){
+    return sizeof(v[0]) * v.size() + sizeof(unsigned long) * 2;
 }
 
+/*
 template<typename POD>
 std::istream& deserialize_vector(std::istream& is, std::vector<POD>& v)
 {
@@ -91,7 +127,19 @@ std::istream& deserialize_vector(std::istream& is, std::vector<POD>& v)
     is.read(reinterpret_cast<char*>(v.data()), v.size() * sizeof(POD));
     return is;
 }
+template<typename POD>
+std::ostream& serialize_vector(std::ostream& os, std::vector<POD> const& v)
+{
+    // this only works on built in data types (PODs)
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only serialize POD types with this function");
 
+    auto size = v.size();
+    os.write(reinterpret_cast<char const*>(&size), sizeof(size));
+    os.write(reinterpret_cast<char const*>(v.data()), v.size() * sizeof(POD));
+    return os;
+}
+*/
 std::string SEALSerialize(const GaloisKeys& sealobj) {
     std::stringstream stream;
     sealobj.save(stream);
@@ -177,8 +225,8 @@ int main(int argc, char *argv[])
 
 	int sockfd, newsockfd, portno;
 	socklen_t clilen;
-	char buffer[256];
-    char buffer_sending[256];
+	char buffer[2048];
+    char buffer_sending[2048];
 	struct sockaddr_in serv_addr, cli_addr;
 	int n;
 	if (argc < 2) {
@@ -226,8 +274,8 @@ int main(int argc, char *argv[])
 		    inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
 
 		// This send() function sends the 13 bytes of the string to the new socket
-		bzero(buffer, 256);
-		n = read(newsockfd, buffer, 255);
+		bzero(buffer, 2047);
+		n = read(newsockfd, buffer, 2047);
 		if (n < 0)
 			error("ERROR reading from socket");
 		printf("Client input: %s\n", buffer);
@@ -244,26 +292,58 @@ int main(int argc, char *argv[])
         }
 		//TODO: figure out if this serialization works
         // sending encrypt param and PIR param in char array
-        std::cout << "Main: copying the parameters"<< "size of enc param: "<<sizeof(enc_params)<< " size of pir param: "<<sizeof(pir_params)<<endl;
+        //serialzing vector pir_param.nvec
+        for(auto i: pir_params.nvec)
+            std::cout << i << '\n';
+
+        unsigned long vec_size = get_size_of_serialized_vector(pir_params.nvec);
+
+        void *buffer_vector = malloc(vec_size);
+        serialize_vector(pir_params.nvec, (char *)buffer_vector);
+
+        std::cout <<"hi"<<"\n";
+
+        std::vector<std::uint64_t> nvec_hold;
+        deserialize_vector(nvec_hold, (char *)buffer_vector);
+        for(auto i: nvec_hold)
+            std::cout << i << '\n';
+
+
         std::cout<< "pir param"<<endl;
+
+        /**
+         * communication format:
+         * enc_param (serialized)
+         * pir_param (serialized)
+         * pir_param.nvec length (unsigned long)
+         * pir_param.nvec (serialized vector)
+         * /r/n/0
+         * 
+        */
         hexDump(&pir_params,sizeof(PirParams));
-        bzero(buffer_sending, 256);
+        bzero(buffer_sending, 2048);
         ::memcpy(buffer_sending, &enc_params, sizeof(enc_params));
         ::memcpy(buffer_sending+sizeof(enc_params), &pir_params, sizeof(pir_params));
+        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params), &(vec_size), sizeof(unsigned long)); // tells the size of vector
+        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params)+sizeof(unsigned long), buffer_vector, vec_size);
+        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params)+sizeof(unsigned long)+vec_size, "\r\n\0",2);
 
-        serialize_vector()
+        std::cout << "Main: copying the parameters\n"<< "size of enc param: "<<sizeof(enc_params)<< "\nsize of pir param: "<<sizeof(pir_params)<< "\nvector:" << vec_size << endl;
+    //TODO: make your own serialization of vector
         // serialize vector
-        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params), "\r\n\0",2);
         std::cout << "Socket: sending the parameters"<< endl;
-        hexDump( buffer_sending,  sizeof(enc_params)+sizeof(pir_params)+2);
-		send(newsockfd, buffer_sending, sizeof(enc_params)+sizeof(pir_params)+3, 0);
+        hexDump(buffer_sending,  sizeof(enc_params)+sizeof(pir_params)+sizeof(unsigned long)+vec_size+2);
+		send(newsockfd, buffer_sending, sizeof(enc_params)+sizeof(pir_params)+vec_size+2, 0);
+        std::cout <<"vector buffer"<<endl;
+        hexDump((char *)buffer_vector, vec_size);
+
         std::cout << "Socket: sent"<< endl;
 
         //reads Galois key from client
         std::cout << "Socket: reading Galois key from client"<< endl;
 
-        bzero(buffer, 256);
-		n = read(newsockfd, buffer, 255);
+        bzero(buffer, 2048);
+		n = read(newsockfd, buffer, 2048);
 		if (n < 0)
 			error("ERROR reading from socket"); 
         std::cout << "Socket: done reading Galois key from client"<< endl;
@@ -280,7 +360,7 @@ int main(int argc, char *argv[])
         // ack the client that it is done initializing
         send(newsockfd, "ACK", 4, 0);
 
-        n = read(newsockfd, buffer, 255);
+        n = read(newsockfd, buffer, 2047);
 		if (n < 0)
 			error("ERROR reading from socket"); 
         

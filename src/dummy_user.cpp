@@ -21,6 +21,58 @@
 using namespace std::chrono;
 using namespace std;
 using namespace seal;
+
+/**
+ * serialization:
+ * /------sizeof(unsigned long) * 2 -------/
+ *   [size of vector]  [size of element]  [element 1][element 2]...
+ * 
+*/
+template<typename POD>
+std::vector<POD>& deserialize_vector(std::vector<POD> vec, char *buffer){
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only deserialize POD types with this function");
+    unsigned long size;
+    unsigned long ele_size;
+    int offset = 0;
+
+    memcpy(&size, buffer, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    memcpy(&ele_size, buffer+offset, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+
+    for (int i=0; i<size; i++) {
+        POD element_hold;
+        memcpy(&element_hold, buffer + offset, ele_size);
+        offset += ele_size;
+        vec.push_back(element_hold);
+    }
+    return vec;
+}
+template<typename POD>
+void serialize_vector(std::vector<POD> vec, char *buffer){
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only serialize POD types with this function");
+    unsigned long size = vec.size();
+    unsigned long ele_size = sizeof(vec[0]);
+    int offset = 0;
+    memcpy(buffer, &size, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    memcpy(buffer+offset, &ele_size, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    for (auto element : vec) {
+        memcpy(buffer+offset, &element, ele_size);
+        offset += ele_size;
+    }
+}
+
+
+template<typename POD>
+unsigned long get_size_of_serialized_vector(std::vector<POD> const& v){
+    return sizeof(v[0]) * v.size() + sizeof(unsigned long) * 2;
+}
+
+
 void hexDump(void *addr, int len)
 {
 	int i;
@@ -57,23 +109,21 @@ void hexDump(void *addr, int len)
 		printf("   ");
 		i++;
 	}
-
 	// And print the final ASCII bit.
 	printf("  %s\n", buff);
 }
 
 void my_print_pir_params(const PirParams &pir_params)
 {
-    cout<< "in my print"<< endl;
+	cout << "in my print" << endl;
 
-    std::__1::vector<uint64_t> paramVect = pir_params.nvec;
-    cout << "I have vector" <<endl;
-    for(auto paramV : paramVect){
-        cout << "it vec"<< paramV <<endl;
-    }
+	std::__1::vector<uint64_t> paramVect = pir_params.nvec;
+	cout << "I have vector" << endl;
+	for (auto paramV : paramVect) {
+		cout << "it vec" << paramV << endl;
+	}
 	std::uint32_t prod = accumulate(pir_params.nvec.begin(), pir_params.nvec.end(), 1,
 	    multiplies<uint64_t>());
-
 
 	cout << "PIR Parameters" << endl;
 	cout << "number of elements: " << pir_params.ele_num << endl;
@@ -119,6 +169,8 @@ int main(int argc, char *argv[])
 
 	void *enc_param_buffer = malloc(sizeof(EncryptionParameters));
 	void *pir_param_buffer = malloc(sizeof(PirParams));
+	void *pir_vector_buffer;
+	unsigned long pir_nvec_len = 0;
 
 	// Generates all parameters
 
@@ -127,7 +179,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
 
-	char buffer[256];
+	char buffer[2048];
 	if (argc < 3) {
 		fprintf(stderr, "usage %s hostname port\n", argv[0]);
 		exit(0);
@@ -156,56 +208,77 @@ int main(int argc, char *argv[])
 	if (n < 0)
 		error("ERROR writing to socket");
 	cout << "Socket: wrote connet to the server" << endl;
-	bzero(buffer, 256);
-	// n = read(sockfd, buffer, 255);
+	bzero(buffer, 2048);
+	// n = read(sockfd, buffer, 2047);
 
 	std::string paramString = "";
 	FILE *socketFile = fdopen(sockfd, "r");
 	std::cout << "Socket: opened read socket file" << endl;
-	/*while (fgets(buffer, 255, socketFile)) {
+	/*while (fgets(buffer, 2047, socketFile)) {
 		paramString.append(buffer);
 	std::cout << "buffer: "<< paramString<< endl;
-	hexDump(buffer, 255);
+	hexDump(buffer, 2047);
 	}*/
 
-	n = read(sockfd, buffer, 255);
+	n = read(sockfd, buffer, 2047);
 
-	while (n == 255) {
+	while (n == 2047) {
 		paramString.append(buffer);
 		std::cout << "buffer: " << paramString << endl;
-		hexDump(buffer, 255);
-		n = read(sockfd, buffer, 255);
+		hexDump(buffer, 2047);
+		n = read(sockfd, buffer, 2047);
 	}
 	paramString.append(buffer);
 	std::cout << "buffer: " << paramString << endl;
-	hexDump(buffer, 255);
-
+	hexDump(buffer, 2047);
 	std::cout << "Socket: recieved param" << endl;
 
 	std::cout << "Main: Initializing pir client"
 		  << "Enc size: " << sizeof(EncryptionParameters) << " pir size: " << sizeof(PirParams) << endl;
 
+	// copying the received information to local buffers
 	::memcpy(enc_param_buffer, buffer, sizeof(EncryptionParameters));
 	::memcpy(pir_param_buffer, buffer + sizeof(EncryptionParameters), sizeof(PirParams));
+	::memcpy(&pir_nvec_len, buffer + sizeof(EncryptionParameters) + sizeof(PirParams), sizeof(unsigned long));
+	pir_vector_buffer = malloc(pir_nvec_len);
+	printf("pir allocated at: %p with %ld size\n", pir_vector_buffer, pir_nvec_len);
+	::memcpy(pir_vector_buffer, buffer + sizeof(EncryptionParameters) + sizeof(PirParams) + sizeof(unsigned long), pir_nvec_len);
 
 	std::cout << "Main: copied params" << endl;
-	PirParams *pir_param_object;
-	memcpy(pir_param_object, pir_param_buffer, sizeof(PirParams));
-	hexDump(pir_param_object, sizeof(PirParams));
+	std::cout << "vector buffer:" << endl;
+	hexDump(pir_vector_buffer, pir_nvec_len);
 
-	my_print_pir_params(*pir_param_object);
+	// turning the buffered bits into objects
+	// deserialzing pir object
+	PirParams pir_param_object;
+	memcpy(&pir_param_object, pir_param_buffer, sizeof(PirParams));
+	std::cout << "pir param:" << endl;
+	hexDump(&pir_param_object, sizeof(PirParams));
+	std::cout << "Main: copied pir param" << endl;
+
+	// deserializing pir.nvec
+
+
+	std::vector<std::uint64_t> nvec_hold;
+
+
+	deserialize_vector(nvec_hold, (char *)pir_vector_buffer);
+	std::cout << "Main: deserialized vector" << endl;
+	pir_param_object.nvec = nvec_hold;
+
+	my_print_pir_params(pir_param_object);
 	fprintf(stderr, "done printing\n");
 	PIRClient client(*(EncryptionParameters *)enc_param_buffer, *(PirParams *)pir_param_buffer);
 
 	std::cout << "Main: created galois key" << endl;
 	GaloisKeys galois_keys = client.generate_galois_keys();
-	bzero(buffer, 256);
+	bzero(buffer, 2048);
 
 	std::cout << "Socket: sending galois key" << endl;
 	::memcpy(buffer, &galois_keys, sizeof(GaloisKeys));
 	n = write(sockfd, buffer, sizeof(GaloisKeys));
 
-	n = read(sockfd, buffer, 255);
+	n = read(sockfd, buffer, 2047);
 	if (buffer[0] == 'A' && buffer[0] == 'C' && buffer[0] == 'K') {
 		std::cout << "Main: done setting up!! yay" << endl;
 	}
