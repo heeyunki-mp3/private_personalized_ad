@@ -15,7 +15,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include "serialization.h"
 using namespace seal;
 using namespace std::chrono;
 using namespace std;
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
 	std::cout << "Main: Initializing pir server" << endl;
 	PIRServer server(enc_params, pir_params);
 
-    void *galois_keys = malloc(sizeof(GaloisKeys));
+    void *galois_keys = malloc(sizeof(GaloisKeys)); 
     void *query = malloc(sizeof(PirQuery));
 
 //############### copied to while loop from here #################//
@@ -279,10 +279,8 @@ int main(int argc, char *argv[])
 		if (n < 0)
 			error("ERROR reading from socket");
 		printf("Client input: %s\n", buffer);
-        for (int i=0; i<n; i++){
-            printf("Client input: %c\n", buffer[i]);
-        }
-		// TODO: buffer is the communication from the user
+
+		// buffer is the communication from the user
         if (strcmp(buffer, "connect") == 0){
             std::cout << "Registering" << endl;
         }
@@ -293,26 +291,20 @@ int main(int argc, char *argv[])
 		//TODO: figure out if this serialization works
         // sending encrypt param and PIR param in char array
         //serialzing vector pir_param.nvec
+
+        std::cout << "pir param nvec: ";
         for(auto i: pir_params.nvec)
-            std::cout << i << '\n';
+            std::cout << i << ", ";
+        std::cout << endl;
 
         unsigned long vec_size = get_size_of_serialized_vector(pir_params.nvec);
 
         void *buffer_vector = malloc(vec_size);
         serialize_vector(pir_params.nvec, (char *)buffer_vector);
 
-        std::cout <<"hi"<<"\n";
-
-        std::vector<std::uint64_t> nvec_hold;
-        deserialize_vector(nvec_hold, (char *)buffer_vector);
-        for(auto i: nvec_hold)
-            std::cout << i << '\n';
-
-
-        std::cout<< "pir param"<<endl;
-
         /**
          * communication format:
+         * unsigned long enc_size
          * enc_param (serialized)
          * pir_param (serialized)
          * pir_param.nvec length (unsigned long)
@@ -320,24 +312,32 @@ int main(int argc, char *argv[])
          * /r/n/0
          * 
         */
-        hexDump(&pir_params,sizeof(PirParams));
+
+        std:cout << "Main: serializing enc stream"<<endl;
+        std::stringstream enc_stream;
+        unsigned long enc_size = enc_params.save(enc_stream);
+
+        const std::string tmp_enc = enc_stream.str();
+        const char* enc_buffer = tmp_enc.c_str();
+        std::cout << "Main: serialized enc stream: size = " << enc_size<<endl;
+
         bzero(buffer_sending, 2048);
-        ::memcpy(buffer_sending, &enc_params, sizeof(enc_params));
-        ::memcpy(buffer_sending+sizeof(enc_params), &pir_params, sizeof(pir_params));
-        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params), &(vec_size), sizeof(unsigned long)); // tells the size of vector
-        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params)+sizeof(unsigned long), buffer_vector, vec_size);
-        ::memcpy(buffer_sending+sizeof(enc_params)+sizeof(pir_params)+sizeof(unsigned long)+vec_size, "\r\n\0",2);
+        ::memcpy(buffer_sending, &enc_size, sizeof(unsigned long));
+        ::memcpy(buffer_sending+sizeof(unsigned long), enc_buffer, enc_size);
+        ::memcpy(buffer_sending+sizeof(unsigned long)+enc_size, &pir_params, sizeof(pir_params));
+        ::memcpy(buffer_sending+sizeof(unsigned long)+enc_size+sizeof(pir_params), &(vec_size), sizeof(unsigned long)); // tells the size of vector
+        ::memcpy(buffer_sending+sizeof(unsigned long)+enc_size+sizeof(pir_params)+sizeof(unsigned long), buffer_vector, vec_size);
+        ::memcpy(buffer_sending+sizeof(unsigned long)+enc_size+sizeof(pir_params)+sizeof(unsigned long)+vec_size, "\r\n\0",2);
+        std::cout<< "Main: enc param:"<<endl;
 
-        std::cout << "Main: copying the parameters\n"<< "size of enc param: "<<sizeof(enc_params)<< "\nsize of pir param: "<<sizeof(pir_params)<< "\nvector:" << vec_size << endl;
-    //TODO: make your own serialization of vector
-        // serialize vector
+        hexDump((char *)enc_buffer, enc_size);
+
+        std::cout << "Main: copied the parameters\n"<< "    size of enc param: "<<enc_size<< "\n  size of pir param: "<<sizeof(pir_params)<< "\n  size of nvector:" << vec_size << endl;
         std::cout << "Socket: sending the parameters"<< endl;
-        hexDump(buffer_sending,  sizeof(enc_params)+sizeof(pir_params)+sizeof(unsigned long)+vec_size+2);
-		send(newsockfd, buffer_sending, sizeof(enc_params)+sizeof(pir_params)+vec_size+2, 0);
-        std::cout <<"vector buffer"<<endl;
-        hexDump((char *)buffer_vector, vec_size);
-
-        std::cout << "Socket: sent"<< endl;
+        std::cout <<"Main: bytes that are sending right now: "<< endl;
+        hexDump(buffer_sending,sizeof(unsigned long)+enc_size+sizeof(pir_params)+sizeof(unsigned long)+vec_size+2);
+		send(newsockfd, buffer_sending, enc_size+sizeof(pir_params)+vec_size+2, 0);
+        std::cout << "Socket: params sent"<< endl;
 
         //reads Galois key from client
         std::cout << "Socket: reading Galois key from client"<< endl;

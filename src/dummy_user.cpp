@@ -237,12 +237,15 @@ int main(int argc, char *argv[])
 		  << "Enc size: " << sizeof(EncryptionParameters) << " pir size: " << sizeof(PirParams) << endl;
 
 	// copying the received information to local buffers
-	::memcpy(enc_param_buffer, buffer, sizeof(EncryptionParameters));
-	::memcpy(pir_param_buffer, buffer + sizeof(EncryptionParameters), sizeof(PirParams));
-	::memcpy(&pir_nvec_len, buffer + sizeof(EncryptionParameters) + sizeof(PirParams), sizeof(unsigned long));
+	unsigned long enc_size;
+	::memcpy(&enc_size, buffer, sizeof(unsigned long));
+
+	::memcpy(enc_param_buffer, buffer+sizeof(unsigned long), enc_size);
+	::memcpy(pir_param_buffer, buffer +sizeof(unsigned long)+enc_size, sizeof(PirParams));
+	::memcpy(&pir_nvec_len, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams), sizeof(unsigned long));
 	pir_vector_buffer = malloc(pir_nvec_len);
 	printf("pir allocated at: %p with %ld size\n", pir_vector_buffer, pir_nvec_len);
-	::memcpy(pir_vector_buffer, buffer + sizeof(EncryptionParameters) + sizeof(PirParams) + sizeof(unsigned long), pir_nvec_len);
+	::memcpy(pir_vector_buffer, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams) + sizeof(unsigned long), pir_nvec_len);
 
 	std::cout << "Main: copied params" << endl;
 	std::cout << "vector buffer:" << endl;
@@ -267,8 +270,21 @@ int main(int argc, char *argv[])
 	pir_param_object.nvec = nvec_hold;
 
 	my_print_pir_params(pir_param_object);
-	fprintf(stderr, "done printing\n");
-	PIRClient client(*(EncryptionParameters *)enc_param_buffer, *(PirParams *)pir_param_buffer);
+
+
+	EncryptionParameters enc_param_object;
+	std::stringstream enc_stream;
+	hexDump(enc_param_buffer, enc_size);
+	std::cout << "Main: before streaming" <<endl;
+    enc_stream << enc_param_buffer << endl;
+	std::cout << "Main: after streaming"<<endl;
+
+    enc_param_object.load(reinterpret_cast<const seal_byte *>(enc_param_buffer), enc_size);
+
+	//enc_param_object.load(enc_stream);
+	std::cout << "Main: after loading"<<endl;
+
+	PIRClient client(enc_param_object, pir_param_object);
 
 	std::cout << "Main: created galois key" << endl;
 	GaloisKeys galois_keys = client.generate_galois_keys();
