@@ -143,15 +143,15 @@ int main(int argc, char *argv[])
 	uint32_t d = dim;
 
 	EncryptionParameters enc_params(scheme_type::bfv);
-	PirParams pir_params;
+	sealpir::PirParams pir_params;
 
 	// Generates all parameters
 
 	std::cout << "Main: Generating SEAL parameters" << endl;
-	gen_encryption_params(N, logt, enc_params);
+	sealpir::gen_encryption_params(N, logt, enc_params);
 
 	std::cout << "Main: Verifying SEAL parameters" << endl;
-	verify_encryption_params(enc_params);
+	sealpir::verify_encryption_params(enc_params);
 
 	std::cout << "Main: SEAL parameters are good" << endl;
 
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
 	// Initialize PIR Server
 	std::cout << "Main: Initializing pir server" << endl;
-	PIRServer server(enc_params, pir_params);
+	sealpir::PIRServer server(enc_params, pir_params);
 
 
     void *query = malloc(sizeof(PirQuery));

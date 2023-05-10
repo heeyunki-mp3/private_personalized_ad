@@ -11,15 +11,12 @@ add_library(sealpir pir.hpp pir.cpp pir_client.hpp pir_client.cpp pir_server.hpp
   pir_server.cpp)
 target_link_libraries(sealpir SEAL::seal_shared)
 
-add_library(adpir server.hpp server.cpp user.hpp user.cpp ad.hpp ad.cpp)
+add_library(adpir user.hpp user.cpp ad.hpp ad.cpp)
 target_link_libraries(adpir sealpir)
 
 add_executable(main_user main_user.cpp)
 target_link_libraries(main_user adpir)
 target_link_libraries(main_user ${Boost_LIBRARIES})
 
-add_executable(server server.cpp)
-target_link_libraries(server adpir)
-
-add_executable(client dummy_user.cpp)
-target_link_libraries(client adpir)
+add_executable(main_server main_server.cpp)
+target_link_libraries(main_server adpir)
