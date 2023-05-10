@@ -395,26 +395,27 @@ int main(int argc, char *argv[])
 
         // RYAN: Now, it is ready to accept the query request
         // Below is the code I might want to use for querying
-        /*
-
-        n = read(newsockfd, buffer, 2047);
-		if (n < 0)
-			error("ERROR reading from socket"); 
         
-        std::stringstream query_stream;
-        query_stream << buffer;
-        PirQuery query_object = server.deserialize_query(query_stream);
-        PirReply reply = server.generate_reply(query_object, 0);
-        
-        std::stringstream server_stream;
-        int reply_size=server.serialize_reply(reply, server_stream);
+        while (true) {
+            bzero(buffer, 2048);
+            n = read(newsockfd, buffer, 2047);
+            if (n < 0)
+                error("ERROR reading from socket"); 
+            
+            std::stringstream query_stream;
+            query_stream << buffer;
+            PirQuery query_object = server.deserialize_query(query_stream);
+            PirReply reply = server.generate_reply(query_object, 0);
+            
+            std::stringstream server_stream;
+            int reply_size=server.serialize_reply(reply, server_stream);
 
-        const std::string tmp = server_stream.str();
-        const char* main_stream_buffer = tmp.c_str();
+            const std::string tmp = server_stream.str();
+            const char* main_stream_buffer = tmp.c_str();
 
-		send(newsockfd, main_stream_buffer, reply_size ,0);
-        std::cout << "Main: Done sending the ad!"<< endl;
-        */
+            send(newsockfd, main_stream_buffer, reply_size ,0);
+            std::cout << "Main: Done sending the ad!"<< endl;
+        }
 
 		close(newsockfd);
 	}

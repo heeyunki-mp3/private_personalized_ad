@@ -57,6 +57,7 @@ void UserProgram::_run(ModeType modeType) {
     BOOST_LOG_TRIVIAL(info) << "Client: Entering infinite loop";
     while (true) {
         // Interface with user
+        std::cout << endl << endl;  // For spacing
         std::cout << "Here are the ads we have for you!" << std::endl;
         for (auto a : currAds_) {
             std::cout << "Ad " << a.first << ": ";
@@ -129,6 +130,8 @@ void UserProgram::updateCntsFromUserSelection(unsigned int userSelection) {
 /* FOR INTERFACING WITH SERVER */
 
 void UserProgram::removeLeastPopularAd() {
+    BOOST_LOG_TRIVIAL(info) << "Removing least popular ad";
+
     // Find least popular ad group
     unsigned int leastPopularGrp, leastPopularCnt;
     leastPopularGrp = 0;         // Note slight bias toward group 0
@@ -166,10 +169,33 @@ void UserProgram::removeLeastPopularAd() {
 
 void UserProgram::updateAdSetServer() {
     unsigned int mostPopularGrp = getMostPopularAdGroup();
+    unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
 
-    // TODO: Request ad from server
+    /* Request ad from server */
 
-    // TODO: Add ad to currAds
+    // PirQuery query = pirclient_->generate_query(adRequested);
+    // BOOST_LOG_TRIVIAL(info) << "Client: Query generated";
+    char buffer[4096];
+    bzero(buffer, 4096);
+    stringstream client_stream;
+    pirclient_->generate_serialized_query(adRequested, client_stream);
+    const std::string tmp = client_stream.str();
+    const char *tmp_buffer;
+    unsigned long tmp_len;
+    tmp_buffer = tmp.data();
+    tmp_len = tmp.size();
+    write(socketfd_, tmp_buffer, tmp_len);
+    BOOST_LOG_TRIVIAL(info) << "Client: Sent query to server";
+
+    bzero(buffer, 4096);
+    n = read(newsockfd, buffer, 2047);
+    if (n < 0) {
+        BOOST_LOG_TRIVIAL(error) << "Client: Could not read from socket";
+        exit(0);
+    }
+    vector<uint8_t> elems = client.decode_reply(reply, offset);
+
+    // TODO: Heeyun
 
     removeLeastPopularAd();
 }
@@ -408,6 +434,7 @@ void UserProgram::obtainInitialAdSetServer() {
         bzero(tmpno, 6);
         for (int j = 0; j < 6; ++j)
             tmpno[j] = buf[startByte + j];
+        tmpno[5] = '\0';
         unsigned int adNo = (unsigned int) atoi(tmpno);
         adNos.push_back(adNo);
     }
