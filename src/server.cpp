@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
 
         /**
          * communication format:
-         * unsigned long enc_size
+         * enc_size (unsigned long)
          * enc_param (serialized)
          * pir_param (serialized)
          * pir_param.nvec length (unsigned long)
@@ -354,7 +354,9 @@ int main(int argc, char *argv[])
 
 
         // RYAN: Now, it is ready to accept the query request
+        // Below is the code I might want to use for querying
         /*
+
         n = read(newsockfd, buffer, 2047);
 		if (n < 0)
 			error("ERROR reading from socket"); 

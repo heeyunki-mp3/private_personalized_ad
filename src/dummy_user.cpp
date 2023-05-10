@@ -310,6 +310,7 @@ int main(int argc, char *argv[])
 	std::cout << "Main: closed socket"<<endl;
 	free(enc_param_buffer);
 	free(pir_param_buffer);
+	free(pir_vector_buffer);
 	std::cout << "Main: freed malloc'd"<<endl;
 
 	return 0;
