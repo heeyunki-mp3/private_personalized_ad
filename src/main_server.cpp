@@ -397,13 +397,19 @@ int main(int argc, char *argv[])
         // Below is the code I might want to use for querying
         
         while (true) {
+            std::string longString = "";
             bzero(buffer, 2048);
-            n = read(newsockfd, buffer, 2047);
-            if (n < 0)
-                error("ERROR reading from socket"); 
+            while ((n = read(newsockfd, buffer, 2048)) == 2048) {
+                cout << "Server: Makeing a read" << std::endl;
+                std::string currString(buffer, n);
+                longString += currString;
+                bzero(buffer, 2048);
+            }
+            std::string extraString(buffer, n);
+            longString += extraString;
             
             std::stringstream query_stream;
-            query_stream << buffer;
+            query_stream << longString;
             PirQuery query_object = server.deserialize_query(query_stream);
             PirReply reply = server.generate_reply(query_object, 0);
             

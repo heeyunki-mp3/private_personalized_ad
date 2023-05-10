@@ -421,6 +421,7 @@ void UserProgram::doEncryptionSetup() {
 
         // Update adset
         unsigned int mostPopularGrp = getMostPopularAdGroup();
+        srand(time(NULL));
         unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
         auto time_pre_r = high_resolution_clock::now();
         updateAdSetServer(enc_param_object, adRequested);
