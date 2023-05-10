@@ -167,7 +167,7 @@ void UserProgram::removeLeastPopularAd() {
     }
 }
 
-void UserProgram::updateAdSetServer() {
+void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params) {
     unsigned int mostPopularGrp = getMostPopularAdGroup();
     unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
 
@@ -222,7 +222,7 @@ void UserProgram::updateAdSetServer() {
 
     // context: the seal context initialized with parameters matching  SealPIRseal
     // e.g. seal::SEALContext(seal::EncryptionParameters{seal::scheme_type::bfv}, true)
-    vector<uint8_t> elems = pirclient_.decode_reply(reply, offset);
+    vector<uint8_t> elems = pirclient_.decode_reply(reply);
 
     // TODO: Heeyun
 
@@ -416,7 +416,7 @@ void UserProgram::doEncryptionSetup() {
 
         // Update cnt_
         updateCntsFromUserSelection(userSelection);
-        updateAdSetServer();
+        updateAdSetServer(enc_params);
         printCnts();    // For testing
     }
 }

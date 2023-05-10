@@ -58,7 +58,7 @@ public:
     void updateCntsFromUserSelection(unsigned int);
 
     /* For interfacing with server */   
-    void updateAdSetServer();
+    void updateAdSetServer(seal::EncryptionParameters enc_params);
 
     /* For setup with server */
     void doSetup(char *hostname, char *port);
