@@ -354,6 +354,7 @@ int main(int argc, char *argv[])
 
 
         // RYAN: Now, it is ready to accept the query request
+        /*
         n = read(newsockfd, buffer, 2047);
 		if (n < 0)
 			error("ERROR reading from socket"); 
@@ -371,6 +372,7 @@ int main(int argc, char *argv[])
 
 		send(newsockfd, main_stream_buffer, reply_size ,0);
         std::cout << "Main: Done sending the ad!"<< endl;
+        */
 
 		close(newsockfd);
 	}

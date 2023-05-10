@@ -268,7 +268,6 @@ int main(int argc, char *argv[])
 
 	my_print_pir_params(pir_param_object);
 
-
 	EncryptionParameters enc_param_object;
 	std::stringstream enc_stream;
     enc_stream << enc_param_buffer << endl;
@@ -308,6 +307,11 @@ int main(int argc, char *argv[])
 	}
 	// RYAN: ready to send  query
 	close(sockfd);
+	std::cout << "Main: closed socket"<<endl;
+	free(enc_param_buffer);
+	free(pir_param_buffer);
+	std::cout << "Main: freed malloc'd"<<endl;
+
 	return 0;
 	//----- socket ends -----
 }
