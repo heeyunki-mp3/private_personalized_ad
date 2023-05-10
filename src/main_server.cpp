@@ -412,6 +412,12 @@ int main(int argc, char *argv[])
 
             const std::string tmp = server_stream.str();
             const char* main_stream_buffer = tmp.c_str();
+            send(newsockfd, &reply_size, sizeof(int),0);
+            
+            read(newsockfd, buffer, 3);
+            if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
+                std::cout << "Socket: received ACK for Galois key length" << endl;
+            }
 
             send(newsockfd, main_stream_buffer, reply_size ,0);
             std::cout << "Main: Done sending the ad!"<< endl;

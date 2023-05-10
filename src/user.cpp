@@ -188,12 +188,41 @@ void UserProgram::updateAdSetServer() {
     BOOST_LOG_TRIVIAL(info) << "Client: Sent query to server";
 
     bzero(buffer, 4096);
-    n = read(newsockfd, buffer, 2047);
+    unsigned long n;
+    BOOST_LOG_TRIVIAL(info) << "Client: receiving reply size";
+    int reply_size =0;
+   
+    n = read(socketfd_, &reply_size, sizeof(int));
+    char *reply_buffer = (char *)malloc(reply_size);
+    write(socketfd_, "ACK", 3);
+
+    BOOST_LOG_TRIVIAL(info) << "Client: receiving actual reply ";
+    n = read(socketfd_, reply_buffer, reply_size);
+    std::string reply_str(reply_buffer, reply_size);
+    
     if (n < 0) {
         BOOST_LOG_TRIVIAL(error) << "Client: Could not read from socket";
         exit(0);
     }
-    vector<uint8_t> elems = client.decode_reply(reply, offset);
+    BOOST_LOG_TRIVIAL(info) << "Client: deserializing actual reply ";
+
+    // Deserialize reply
+    std::stringstream istream;
+    istream << reply_str;
+    PirReply reply;
+    
+    // ryan: get enc_param for this line
+    SEALContext context(enc_params);
+
+    while (istream.rdbuf()->in_avail() > 0) {
+        seal::Ciphertext c;
+        c.load(context, istream);
+        reply.push_back(std::move(c));
+    }
+
+    // context: the seal context initialized with parameters matching  SealPIRseal
+    // e.g. seal::SEALContext(seal::EncryptionParameters{seal::scheme_type::bfv}, true)
+    vector<uint8_t> elems = pirclient_.decode_reply(reply, offset);
 
     // TODO: Heeyun
 
