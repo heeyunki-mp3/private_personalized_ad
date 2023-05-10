@@ -36,11 +36,13 @@ int PIRClient::generate_serialized_query(uint64_t desiredIndex,
 
   int N = enc_params_.poly_modulus_degree();
   int output_size = 0;
-  indices_ = compute_indices(desiredIndex, pir_params_.nvec);
+  std::vector<std::uint64_t> local_nvec = {160};
+
+  indices_ = compute_indices(desiredIndex, local_nvec);
   Plaintext pt(enc_params_.poly_modulus_degree());
 
   for (uint32_t i = 0; i < indices_.size(); i++) {
-    uint32_t num_ptxts = ceil((pir_params_.nvec[i] + 0.0) / N);
+    uint32_t num_ptxts = ceil((local_nvec[i] + 0.0) / N);
     // initialize result.
     cout << "Client: index " << i + 1 << "/ " << indices_.size() << " = "
          << indices_[i] << endl;
@@ -50,7 +52,7 @@ int PIRClient::generate_serialized_query(uint64_t desiredIndex,
       pt.set_zero();
       if (indices_[i] >= N * j && indices_[i] <= N * (j + 1)) {
         uint64_t real_index = indices_[i] - N * j;
-        uint64_t n_i = pir_params_.nvec[i];
+        uint64_t n_i = local_nvec[i];
         uint64_t total = N;
         if (j == num_ptxts - 1) {
           total = n_i % N;
@@ -74,15 +76,15 @@ int PIRClient::generate_serialized_query(uint64_t desiredIndex,
 }
 
 PirQuery PIRClient::generate_query(uint64_t desiredIndex) {
-
-  indices_ = compute_indices(desiredIndex, pir_params_.nvec);
+  std::vector<std::uint64_t> local_nvec = {160};
+  indices_ = compute_indices(desiredIndex, local_nvec);
 
   PirQuery result(pir_params_.d);
   int N = enc_params_.poly_modulus_degree();
 
   Plaintext pt(enc_params_.poly_modulus_degree());
   for (uint32_t i = 0; i < indices_.size(); i++) {
-    uint32_t num_ptxts = ceil((pir_params_.nvec[i] + 0.0) / N);
+    uint32_t num_ptxts = ceil((local_nvec[i] + 0.0) / N);
     // initialize result.
     cout << "Client: index " << i + 1 << "/ " << indices_.size() << " = "
          << indices_[i] << endl;
@@ -92,7 +94,7 @@ PirQuery PIRClient::generate_query(uint64_t desiredIndex) {
       pt.set_zero();
       if (indices_[i] >= N * j && indices_[i] <= N * (j + 1)) {
         uint64_t real_index = indices_[i] - N * j;
-        uint64_t n_i = pir_params_.nvec[i];
+        uint64_t n_i = local_nvec[i];
         uint64_t total = N;
         if (j == num_ptxts - 1) {
           total = n_i % N;

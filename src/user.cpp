@@ -173,19 +173,21 @@ void UserProgram::removeLeastPopularAd() {
 void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsigned int adRequested) {
     /* Request ad from server */
 
-    // PirQuery query = pirclient_->generate_query(adRequested);
-    // BOOST_LOG_TRIVIAL(info) << "Client: Query generated";
-    // char buffer[4096];
-    // bzero(buffer, 4096);
-    // stringstream client_stream;
-    // pirclient_->generate_serialized_query(adRequested, client_stream);
-    // const std::string tmp = client_stream.str();
-    // const char *tmp_buffer;
-    // unsigned long tmp_len;
-    // tmp_buffer = tmp.data();
-    // tmp_len = tmp.size();
-    // write(socketfd_, tmp_buffer, tmp_len);
-    // BOOST_LOG_TRIVIAL(info) << "Client: Sent query to server";
+    PirQuery query = pirclient_->generate_query(adRequested);
+    BOOST_LOG_TRIVIAL(info) << "Client: Query generated";
+    char buffer[4096];
+    bzero(buffer, 4096);
+    stringstream client_stream;
+    pirclient_->generate_serialized_query(adRequested, client_stream);
+    const std::string tmp = client_stream.str();
+    const char *tmp_buffer;
+    unsigned long tmp_len;
+    tmp_buffer = tmp.data();
+    tmp_len = tmp.size();
+    hexDump((char *)tmp_buffer,tmp_len);
+
+    write(socketfd_, tmp_buffer, tmp_len);
+    BOOST_LOG_TRIVIAL(info) << "Client: Sent query to server";
 
     bzero(buffer, 4096);
     unsigned long n;
@@ -222,7 +224,7 @@ void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsig
 
     // context: the seal context initialized with parameters matching  SealPIRseal
     // e.g. seal::SEALContext(seal::EncryptionParameters{seal::scheme_type::bfv}, true)
-    vector<uint8_t> elems = pirclient_.decode_reply(reply);
+    seal::Plaintext elems = pirclient_->decode_reply(reply);
 
     // TODO: Heeyun
 
