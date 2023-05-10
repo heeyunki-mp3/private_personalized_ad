@@ -22,6 +22,12 @@ brew install seal
 
 ### Running our program
 
+Build the set of ads using [this python script](./src/create_ads.py):
+
+```bash
+python ./src/create_ads.py
+```
+
 Build the executable using [this CMakeLists.txt](./CMakeLists.txt):
 
 ```bash

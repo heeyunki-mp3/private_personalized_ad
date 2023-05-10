@@ -1,6 +1,7 @@
 #include "pir.hpp"
 #include "pir_client.hpp"
 #include "pir_server.hpp"
+#include "user.hpp"
 #include <arpa/inet.h>
 #include <chrono>
 #include <cstddef>
@@ -380,11 +381,11 @@ int main(int argc, char *argv[])
 
         std::string ad_contents, ad_numbers;
         for (int i = 0; i < 10; ++i) {
-            int r = rand()%5000+i*5000;
+            int r = rand() % TTL_ADS_PER_GROUP + i * TTL_ADS_PER_GROUP;
             ad_contents += ads[r];
             std::string ad_number = to_string(r);
             int size = ad_number.size();
-            for (int j = 0; j < 5-size; ++j) {
+            for (int j = 0; j < MAX_DIGITS_AD_NUMBER-size; ++j) {
                 ad_number = "0" + ad_number;
             }
             cout<<"ad_number: " << ad_number;

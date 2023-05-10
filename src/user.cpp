@@ -38,7 +38,7 @@ UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
     //      ...
     //      9 -- Toy ads
     pirclient_ = NULL;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < TTL_NUMBER_GRPS; ++i)
         cnts_[i] = 0;
 }
 
@@ -109,7 +109,7 @@ unsigned int UserProgram::getGroupFromAdNumber(unsigned int no) {
     //      10000-14999: Ad group 2
     //      ...
     //      45000-49999: Ad group 9
-    return no / 5000;
+    return no / TTL_ADS_PER_GROUP;
 }
 
 unsigned int UserProgram::getMostPopularAdGroup() {
@@ -449,7 +449,7 @@ void UserProgram::obtainInitialAdSetServer() {
     BOOST_LOG_TRIVIAL(info) << "Client: Obtaining initial ad set from server";
 
     int nBytes, startByte;
-    char buf[512], tmpad[33], tmpno[6];
+    char buf[512], tmpad[33], tmpno[MAX_DIGITS_AD_NUMBER + 1];
     
     // Tell server we want to obtain the initial ad set
     nBytes = write(socketfd_, "OBTAIN", 6);
@@ -461,7 +461,7 @@ void UserProgram::obtainInitialAdSetServer() {
 
     // Read initial ad set from server
     nBytes = read(socketfd_, buf, 512);
-    if (nBytes < 370) {         // 32 bytes for ad, 5 bytes for ad number
+    if (nBytes < (32 + MAX_DIGITS_AD_NUMBER) * 10) {         // 32 bytes for ad, ? bytes for ad number
         BOOST_LOG_TRIVIAL(error) << "Client: Could not read initial ad set from server";
         exit(0);
     }
@@ -483,11 +483,11 @@ void UserProgram::obtainInitialAdSetServer() {
 
     // Parse ad numbers
     for (int i = 0; i < 10; ++i) {
-        startByte = 320 + i * 5;
-        bzero(tmpno, 6);
-        for (int j = 0; j < 6; ++j)
+        startByte = 320 + i * MAX_DIGITS_AD_NUMBER;
+        bzero(tmpno, MAX_DIGITS_AD_NUMBER + 1);
+        for (int j = 0; j < MAX_DIGITS_AD_NUMBER + 1; ++j)
             tmpno[j] = buf[startByte + j];
-        tmpno[5] = '\0';
+        tmpno[MAX_DIGITS_AD_NUMBER] = '\0';
         unsigned int adNo = (unsigned int) atoi(tmpno);
         adNos.push_back(adNo);
     }
