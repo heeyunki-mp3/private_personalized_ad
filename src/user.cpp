@@ -80,7 +80,7 @@ void UserProgram::_run(ModeType modeType) {
             updateAdSetLocal();
         else {
             unsigned int mostPopularGrp = getMostPopularAdGroup();
-            unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
+            unsigned int adRequested = rand() % TTL_ADS_PER_GROUP + mostPopularGrp * TTL_ADS_PER_GROUP;
             // updateAdSetServer(adRequested);      // No longer need this here
         }
         printCnts();    // For testing
@@ -434,7 +434,7 @@ void UserProgram::doEncryptionSetup() {
         // Update adset
         unsigned int mostPopularGrp = getMostPopularAdGroup();
         srand(time(NULL));
-        unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
+        unsigned int adRequested = rand() % TTL_ADS_PER_GROUP + mostPopularGrp * TTL_ADS_PER_GROUP;
         auto time_pre_r = high_resolution_clock::now();
         updateAdSetServer(enc_param_object, adRequested);
         auto time_post_r = high_resolution_clock::now();
