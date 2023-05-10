@@ -41,7 +41,7 @@ class UserProgram {
 private:
     std::unordered_map<unsigned int, unsigned int> cnts_;       // K: Ad group, V: Number clicks
     std::unordered_map<unsigned int, Advertisement> currAds_;   // K: Ad number, V: Ad
-    sealpir::PIRClient pirclient_;
+    sealpir::PIRClient *pirclient_;
     int socketfd_;
 
 public:

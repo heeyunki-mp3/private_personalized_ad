@@ -134,3 +134,9 @@ void my_print_pir_params(const PirParams &pir_params)
 	cout << "slot count: " << pir_params.slot_count << endl;
 	cout << "==============================" << endl;
 }
+
+void error(const char *msg)
+{
+	perror(msg);
+	exit(0);
+}

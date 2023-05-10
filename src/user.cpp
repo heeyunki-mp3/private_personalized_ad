@@ -27,8 +27,7 @@ void deserialize_vector(std::vector<POD> vec, char *buffer){
 
 UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
                          sealpir::PirParams pirParams) 
-    : pirclient_(encryptionParams, pirParams), 
-      cnts_({}) {
+    : cnts_({}) {
     // Assume the groupings are known to any computer that uses the ad server
     //
     // In our example:
@@ -38,6 +37,7 @@ UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
     //      3 -- Movie ads
     //      ...
     //      49 -- Toy ads
+    pirclient_ = NULL;
     for (int i = 0; i < 50; ++i)
         cnts_[i] = 0;
 }
@@ -173,123 +173,119 @@ void UserProgram::doSocketConnection(char *hostname, char *port) {
 }
 
 void UserProgram::doEncryptionSetup() {
-    int nBytes;
-	seal::EncryptionParameters enc_params(seal::scheme_type::bfv);
-	sealpir::PirParams pir_params;
-    sealpir::PirParams pir_param_object;
-    seal::GaloisKeys galois_keys;
-    char buf[2048];
-    unsigned long enc_size;
-    void *pir_vector_buffer;
+    int n;
+    int64_t num_items = 1 << 10;
+	uint64_t item_size = 288;
+	uint32_t degree = 4096;
+
+	uint64_t number_of_items = num_items;
+	uint64_t size_per_item = item_size; // in bytes
+	uint32_t N = degree;
+
+	EncryptionParameters enc_params(scheme_type::bfv);
+	PirParams pir_params;
+
+	void *enc_param_buffer = malloc(sizeof(EncryptionParameters));
+	void *pir_param_buffer = malloc(sizeof(PirParams));
+	void *pir_vector_buffer;
 	unsigned long pir_nvec_len = 0;
-    std::string paramString = "";
-    void *enc_param_buffer = malloc(sizeof(seal::EncryptionParameters));
-	void *pir_param_buffer = malloc(sizeof(sealpir::PirParams));
-    if (!enc_param_buffer || !pir_param_buffer) {
-        if (enc_param_buffer) free(enc_param_buffer);
-        if (pir_param_buffer) free(pir_param_buffer);
-        if (pir_vector_buffer) free(pir_vector_buffer);
-        close(socketfd_);
-        BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
-        exit(0);
-    }
+    char buffer[2048];
 
-    // Tell server we want to do the encryption setup
-    nBytes = write(socketfd_, "connect", 7);
-	if (nBytes < 0) {
-		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"connect\" to socket";
-        if (enc_param_buffer) free(enc_param_buffer);
-        if (pir_param_buffer) free(pir_param_buffer);
-        if (pir_vector_buffer) free(pir_vector_buffer);
-        close(socketfd_);
-        BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
-        exit(0);
-    }
+	// cONNECT
 
-    // Read parameters from server
-    // Encryption parameters first, PIR parameters after
-    while((nBytes = read(socketfd_, buf, 255)) == 255) {
-        paramString.append(buf);
-    }
-    paramString.append(buf);
-    BOOST_LOG_TRIVIAL(info) << "Client: Obtained paramString from server";
+	n = write(socketfd_, "connect", 7);
+	if (n < 0)
+		BOOST_LOG_TRIVIAL(error) << "Client: Error writing to socket";
+	BOOST_LOG_TRIVIAL(info) << "Client: wrote connet to the server";
+	bzero(buffer, 2048);
+	// n = read(sockfd, buffer, 2047);
 
-    // // Deserialize parameters
-    // // TODO: WHY BUF?
-    // std::memcpy(enc_param_buffer, buf, sizeof(seal::EncryptionParameters));
-	// std::memcpy(pir_param_buffer, buf + sizeof(seal::EncryptionParameters), sizeof(sealpir::PirParams));
+	std::string paramString = "";
+	FILE *socketFile = fdopen(socketfd_, "r");
+	BOOST_LOG_TRIVIAL(info) << "Client: Opened read socket file";
 
-    // // Initialize PIRClient instance
-    // pirclient_ = sealpir::PIRClient(*((seal::EncryptionParameters *) enc_param_buffer), *((sealpir::PirParams *) pir_param_buffer));
-    // BOOST_LOG_TRIVIAL(info) << "Client: Initialized PIRClient with actual params";
-   
-    // Copy params
-    bzero(buf, 2048);
-	std::memcpy(&enc_size, buf, sizeof(unsigned long));
-	std::memcpy(enc_param_buffer, buf + sizeof(unsigned long), enc_size);
-	std::memcpy(pir_param_buffer, buf + sizeof(unsigned long) + enc_size, sizeof(sealpir::PirParams));
-	std::memcpy(&pir_nvec_len, buf + sizeof(unsigned long) + enc_size + sizeof(sealpir::PirParams), sizeof(unsigned long));
+	n = read(socketfd_, buffer, 2047);
+
+	while (n == 2047) {
+		paramString.append(buffer);
+		std::cout << "buffer: " << paramString << endl;
+		hexDump(buffer, 2047);
+		n = read(socketfd_, buffer, 2047);
+	}
+	paramString.append(buffer);
+
+	std::cout << "Socket: recieved param" << endl;
+
+	std::cout << "Main: Initializing pir client"
+		  << "Enc size: " << sizeof(EncryptionParameters) << " pir size: " << sizeof(PirParams) << endl;
+
+	// copying the received information to local buffers
+	unsigned long enc_size;
+	::memcpy(&enc_size, buffer, sizeof(unsigned long));
+
+	::memcpy(enc_param_buffer, buffer+sizeof(unsigned long), enc_size);
+	::memcpy(pir_param_buffer, buffer +sizeof(unsigned long)+enc_size, sizeof(PirParams));
+	::memcpy(&pir_nvec_len, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams), sizeof(unsigned long));
 	pir_vector_buffer = malloc(pir_nvec_len);
-    if (!pir_vector_buffer) {
-        if (enc_param_buffer) free(enc_param_buffer);
-        if (pir_param_buffer) free(pir_param_buffer);
-        if (pir_vector_buffer) free(pir_vector_buffer);
-        close(socketfd_);
-        BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
-        exit(0);
-    }
-	std::memcpy(pir_vector_buffer, buf + sizeof(unsigned long)+ enc_size + sizeof(sealpir::PirParams) + sizeof(unsigned long), pir_nvec_len);
-    BOOST_LOG_TRIVIAL(info) << "Client: Copied params";
-	
-	std::memcpy(&pir_param_object, pir_param_buffer, sizeof(sealpir::PirParams));
+	printf("pir allocated at: %p with %ld size\n", pir_vector_buffer, pir_nvec_len);
+	::memcpy(pir_vector_buffer, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams) + sizeof(unsigned long), pir_nvec_len);
+
+	std::cout << "Main: copied params" << endl;
+	std::cout << "vector buffer:" << endl;
+
+	// turning the buffered bits into objects
+	// deserialzing pir object
+	PirParams pir_param_object;
+	memcpy(&pir_param_object, pir_param_buffer, sizeof(PirParams));
+	std::cout << "Main: copied pir param" << endl;
+
+	// deserializing pir.nvec
 	std::vector<std::uint64_t> nvec_hold;
-	deserialize_vector(nvec_hold, (char *) pir_vector_buffer);
-	BOOST_LOG_TRIVIAL(info) << "Client: Deserialized vector";
+
+	deserialize_vector(nvec_hold, (char *)pir_vector_buffer);
+	std::cout << "Main: deserialized vector" << endl;
 	pir_param_object.nvec = nvec_hold;
+
+	my_print_pir_params(pir_param_object);
 
 	EncryptionParameters enc_param_object;
 	std::stringstream enc_stream;
     enc_stream << enc_param_buffer << endl;
-    BOOST_LOG_TRIVIAL(info) << "Client: Placed into enc_stream";
+
     enc_param_object.load(reinterpret_cast<const seal_byte *>(enc_param_buffer), enc_size);
+
+	PIRClient client(enc_param_object, pir_param_object);
+    pirclient_ = &client;
+
+	std::cout << "Main: created galois key" << endl;
+	GaloisKeys galois_keys = client.generate_galois_keys();
+	bzero(buffer, 2048);
+
+	std::cout << "Socket: sending galois key" << endl;
+	std::string galois_str = serialize_galoiskeys(galois_keys);
+	unsigned long gal_len = galois_str.size();
+
+	std::cout << "Socket: sending galois key len" << endl;
+
+	::memcpy(buffer, &gal_len, sizeof(unsigned long));
 	
-    BOOST_LOG_TRIVIAL(info) << "Client: Initializing client object";
-    sealpir::PIRClient client(enc_param_object, pir_param_object);
-    BOOST_LOG_TRIVIAL(info) << "Client: DONE!";
+	n = write(socketfd_, buffer, sizeof(unsigned long));
+	std::cout << "Socket: sent galois key len" << endl;
 
-
-
-
-
-    // Generate galois keys
-    galois_keys = pirclient_.generate_galois_keys();
-
-    // Send galois keys to server
-    bzero(buf, 256);
-    std::memcpy(buf, &galois_keys, sizeof(seal::GaloisKeys));
-    nBytes = write(socketfd_, buf, sizeof(seal::GaloisKeys));
-    if (nBytes != sizeof(seal::GaloisKeys)) {
-        BOOST_LOG_TRIVIAL(error) << "Client: Could not send galois keys to server";
-        goto error_cleanup;
-    }
-
-    // Check if server acknowledged
-    nBytes = read(socketfd_, buf, 255);
-	if (buf[0] != 'A' || buf[0] != 'C' || buf[0] != 'K') {
-		BOOST_LOG_TRIVIAL(error) << "Client: Server did not ACK encryption setup";
-        goto error_cleanup;
+	n = read(socketfd_, buffer, 2047);
+	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
+		std::cout << "Socket: received ACK for Galois key length" << endl;
 	}
+	std::cout << "Socket: sending galois key of length "<< gal_len << endl;
 
-    BOOST_LOG_TRIVIAL(info) << "Client: Encryption setup complete";
-    return;
+	n = write(socketfd_, galois_str.data(), gal_len);
 
-error_cleanup:
-    if (enc_param_buffer) free(enc_param_buffer);
-    if (pir_param_buffer) free(pir_param_buffer);
-    if (pir_vector_buffer) free(pir_vector_buffer);
-    close(socketfd_);
-    BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
-    exit(0);
+	std::cout <<"Socekt: done sending galois key"<<endl;
+
+	n = read(socketfd_, buffer, 2047);
+	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
+		BOOST_LOG_TRIVIAL(info) << "Client: done setting up!! yay";
+	}
 }
 
 void UserProgram::obtainInitialAdSetServer() {

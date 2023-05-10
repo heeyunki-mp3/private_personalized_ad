@@ -43,4 +43,6 @@ void hexDump(void *addr, int len);
 
 void my_print_pir_params(const PirParams &pir_params);
 
+void error(const char *msg);
+
 #endif  // SERIALIZATION_HPP_
