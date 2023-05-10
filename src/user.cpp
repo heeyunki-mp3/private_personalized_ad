@@ -77,8 +77,11 @@ void UserProgram::_run(ModeType modeType) {
         updateCntsFromUserSelection(userSelection);
         if (modeType == local)
             updateAdSetLocal();
-        else
-            updateAdSetServer();
+        else {
+            unsigned int mostPopularGrp = getMostPopularAdGroup();
+            unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
+            // updateAdSetServer(adRequested);      // No longer need this here
+        }
         printCnts();    // For testing
     }
 }
@@ -167,25 +170,22 @@ void UserProgram::removeLeastPopularAd() {
     }
 }
 
-void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params) {
-    unsigned int mostPopularGrp = getMostPopularAdGroup();
-    unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
-
+void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsigned int adRequested) {
     /* Request ad from server */
 
     // PirQuery query = pirclient_->generate_query(adRequested);
     // BOOST_LOG_TRIVIAL(info) << "Client: Query generated";
-    char buffer[4096];
-    bzero(buffer, 4096);
-    stringstream client_stream;
-    pirclient_->generate_serialized_query(adRequested, client_stream);
-    const std::string tmp = client_stream.str();
-    const char *tmp_buffer;
-    unsigned long tmp_len;
-    tmp_buffer = tmp.data();
-    tmp_len = tmp.size();
-    write(socketfd_, tmp_buffer, tmp_len);
-    BOOST_LOG_TRIVIAL(info) << "Client: Sent query to server";
+    // char buffer[4096];
+    // bzero(buffer, 4096);
+    // stringstream client_stream;
+    // pirclient_->generate_serialized_query(adRequested, client_stream);
+    // const std::string tmp = client_stream.str();
+    // const char *tmp_buffer;
+    // unsigned long tmp_len;
+    // tmp_buffer = tmp.data();
+    // tmp_len = tmp.size();
+    // write(socketfd_, tmp_buffer, tmp_len);
+    // BOOST_LOG_TRIVIAL(info) << "Client: Sent query to server";
 
     bzero(buffer, 4096);
     unsigned long n;
@@ -416,7 +416,15 @@ void UserProgram::doEncryptionSetup() {
 
         // Update cnt_
         updateCntsFromUserSelection(userSelection);
-        updateAdSetServer(enc_params);
+
+        // Update adset
+        unsigned int mostPopularGrp = getMostPopularAdGroup();
+        unsigned int adRequested = rand() % 5000 + mostPopularGrp * 5000;
+        auto time_pre_r = high_resolution_clock::now();
+        updateAdSetServer(enc_param_object, adRequested);
+        auto time_post_r = high_resolution_clock::now();
+        BOOST_LOG_TRIVIAL(info) << "Client: Total time spent processing SealPIR query: " <<
+            duration_cast<microseconds>(time_post_r-time_pre_r).count() / 1000 << " ms";
         printCnts();    // For testing
     }
 }
