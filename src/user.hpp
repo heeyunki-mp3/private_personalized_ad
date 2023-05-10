@@ -64,6 +64,7 @@ public:
     void doSetup(char *hostname, char *port);
     void doSocketConnection(char *hostname, char *port);
     void doEncryptionSetup();
+    void removeLeastPopularAd();
     void obtainInitialAdSetServer();  
 
     /* For local testing */

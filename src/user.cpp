@@ -30,15 +30,15 @@ UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
     : cnts_({}) {
     // Assume the groupings are known to any computer that uses the ad server
     //
-    // In our example:
+    // In our example, there are 10 groups
     //      0 -- Cooking ads
     //      1 -- Book ads
     //      2 -- Sports ads
     //      3 -- Movie ads
     //      ...
-    //      49 -- Toy ads
+    //      9 -- Toy ads
     pirclient_ = NULL;
-    for (int i = 0; i < 50; ++i)
+    for (int i = 0; i < 10; ++i)
         cnts_[i] = 0;
 }
 
@@ -54,6 +54,7 @@ void UserProgram::_run(ModeType modeType) {
 
     // Runs forever
     unsigned int userSelection;
+    BOOST_LOG_TRIVIAL(info) << "Client: Entering infinite loop";
     while (true) {
         // Interface with user
         std::cout << "Here are the ads we have for you!" << std::endl;
@@ -98,11 +99,12 @@ unsigned int UserProgram::getGroupFromAdNumber(unsigned int no) {
     // Assume this mapping is known to any computer that uses the ad server
     //
     // In our example:
-    //      0-99: Ad group 0
-    //      100-199: Ad group 1
-    //      200-299: Ad group 2
-    //      300-399: Ad group 3
-    return no / 100;
+    //      0-4999: Ad group 0
+    //      5000-9999: Ad group 1
+    //      10000-14999: Ad group 2
+    //      ...
+    //      45000-49999: Ad group 9
+    return no / 5000;
 }
 
 unsigned int UserProgram::getMostPopularAdGroup() {
@@ -126,8 +128,50 @@ void UserProgram::updateCntsFromUserSelection(unsigned int userSelection) {
 
 /* FOR INTERFACING WITH SERVER */
 
-void UserProgram::updateAdSetServer() {
+void UserProgram::removeLeastPopularAd() {
+    // Find least popular ad group
+    unsigned int leastPopularGrp, leastPopularCnt;
+    leastPopularGrp = 0;         // Note slight bias toward group 0
+    leastPopularCnt = INT_MAX;
+    for (auto p : cnts_) {
+        if (p.second < leastPopularCnt) {
+            leastPopularCnt = p.second;
+            leastPopularGrp = p.first;
+        }
+    }
 
+    // We only want to remove the second ad onwards
+    bool foundOneAdAlr = false;
+    bool erasedAnAd = false;
+    unsigned int erasedAd;
+    for (auto ad : currAds_) {
+        if (getGroupFromAdNumber(ad.first) == leastPopularGrp) {
+            if (foundOneAdAlr) {
+                erasedAnAd = true;
+                erasedAd = ad.first;
+                break;
+            } else {
+                foundOneAdAlr = true;
+            }
+        }
+    }
+
+    if (erasedAnAd) {
+        currAds_.erase(erasedAd);
+        BOOST_LOG_TRIVIAL(info) << "Client: Erased ad number " << erasedAd;
+    } else {
+        BOOST_LOG_TRIVIAL(info) << "Client: Could not find a least popular ad to erase";
+    }
+}
+
+void UserProgram::updateAdSetServer() {
+    unsigned int mostPopularGrp = getMostPopularAdGroup();
+
+    // TODO: Request ad from server
+
+    // TODO: Add ad to currAds
+
+    removeLeastPopularAd();
 }
 
 /* FOR SETUP WITH SERVER */
@@ -270,7 +314,7 @@ void UserProgram::doEncryptionSetup() {
 	::memcpy(buffer, &gal_len, sizeof(unsigned long));
 	
 	n = write(socketfd_, buffer, sizeof(unsigned long));
-	// std::cout << "Socket: sent galois key len" << endl;
+	BOOST_LOG_TRIVIAL(info) << "Client: Sent galois key length";
 
 	n = read(socketfd_, buffer, 2047);
 	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
@@ -279,8 +323,7 @@ void UserProgram::doEncryptionSetup() {
 	// std::cout << "Socket: sending galois key of length "<< gal_len << endl;
 
 	n = write(socketfd_, galois_str.data(), gal_len);
-
-	// std::cout <<"Socekt: done sending galois key"<<endl;
+	BOOST_LOG_TRIVIAL(info) << "Client: Done sending galois key";
 
 	n = read(socketfd_, buffer, 2047);
 	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
@@ -289,6 +332,8 @@ void UserProgram::doEncryptionSetup() {
 }
 
 void UserProgram::obtainInitialAdSetServer() {
+    BOOST_LOG_TRIVIAL(info) << "Client: Obtaining initial ad set from server";
+
     int nBytes, startByte;
     char buf[512], tmpad[33], tmpno[6];
     
@@ -298,6 +343,7 @@ void UserProgram::obtainInitialAdSetServer() {
 		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"obtain\" to socket";
         exit(0);
     }
+    BOOST_LOG_TRIVIAL(info) << "Client: Sent \"obtain\" to server";
 
     // Read initial ad set from server
     nBytes = read(socketfd_, buf, 512);
@@ -305,6 +351,7 @@ void UserProgram::obtainInitialAdSetServer() {
         BOOST_LOG_TRIVIAL(error) << "Client: Could not read initial ad set from server";
         exit(0);
     }
+    BOOST_LOG_TRIVIAL(info) << "Client: Read initial ad set from server";
 
     // Set up initial ad set
     vector<Advertisement> ads;  // Ordered
