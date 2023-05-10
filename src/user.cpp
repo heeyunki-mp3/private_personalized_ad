@@ -153,12 +153,15 @@ void UserProgram::doSocketConnection(char *hostname, char *port) {
 
 void UserProgram::doEncryptionSetup() {
     int nBytes;
-    seal::EncryptionParameters encryptionParams;
-    sealpir::PirParams pirParams;
+	seal::EncryptionParameters enc_params(seal::scheme_type::bfv);
+	sealpir::PirParams pir_params;
+    sealpir::PirParams pir_param_object;
     seal::GaloisKeys galois_keys;
-    char buf[256];
+    char buf[2048];
+    unsigned long enc_size;
+    void *pir_vector_buffer;
+	unsigned long pir_nvec_len = 0;
     std::string paramString = "";
-
     void *enc_param_buffer = malloc(sizeof(seal::EncryptionParameters));
 	void *pir_param_buffer = malloc(sizeof(sealpir::PirParams));
     if (!enc_param_buffer || !pir_param_buffer)
@@ -179,14 +182,42 @@ void UserProgram::doEncryptionSetup() {
     paramString.append(buf);
     BOOST_LOG_TRIVIAL(info) << "Client: Obtained paramString from server";
 
-    // Deserialize parameters
-    // TODO: WHY BUF?
-    std::memcpy(enc_param_buffer, buf, sizeof(seal::EncryptionParameters));
-	std::memcpy(pir_param_buffer, buf + sizeof(seal::EncryptionParameters), sizeof(sealpir::PirParams));
+    // // Deserialize parameters
+    // // TODO: WHY BUF?
+    // std::memcpy(enc_param_buffer, buf, sizeof(seal::EncryptionParameters));
+	// std::memcpy(pir_param_buffer, buf + sizeof(seal::EncryptionParameters), sizeof(sealpir::PirParams));
 
-    // Initialize PIRClient instance
-    pirclient_ = sealpir::PIRClient(*((seal::EncryptionParameters *) enc_param_buffer), *((sealpir::PirParams *) pir_param_buffer));
-    BOOST_LOG_TRIVIAL(info) << "Client: Initialized PIRClient with actual params";
+    // // Initialize PIRClient instance
+    // pirclient_ = sealpir::PIRClient(*((seal::EncryptionParameters *) enc_param_buffer), *((sealpir::PirParams *) pir_param_buffer));
+    // BOOST_LOG_TRIVIAL(info) << "Client: Initialized PIRClient with actual params";
+   
+    // Copy params
+    bzero(buf, 2048);
+	std::memcpy(&enc_size, buf, sizeof(unsigned long));
+	std::memcpy(enc_param_buffer, buf + sizeof(unsigned long), enc_size);
+	std::memcpy(pir_param_buffer, buf + sizeof(unsigned long) + enc_size, sizeof(sealpir::PirParams));
+	std::memcpy(&pir_nvec_len, buf + sizeof(unsigned long) + enc_size + sizeof(sealpir::PirParams), sizeof(unsigned long));
+	pir_vector_buffer = malloc(pir_nvec_len);
+    if (!pir_vector_buffer)
+        goto error_cleanup;
+	std::memcpy(pir_vector_buffer, buf + sizeof(unsigned long)+ enc_size + sizeof(sealpir::PirParams) + sizeof(unsigned long), pir_nvec_len);
+    BOOST_LOG_TRIVIAL(info) << "Client: Copied params";
+	
+	std::memcpy(&pir_param_object, pir_param_buffer, sizeof(sealpir::PirParams));
+	std::vector<std::uint64_t> nvec_hold;
+	deserialize_vector(nvec_hold, (char *)pir_vector_buffer);
+	std::cout << "Main: deserialized vector" << endl;
+	pir_param_object.nvec = nvec_hold;
+
+	seal::EncryptionParameters enc_param_object;
+	std::stringstream enc_stream;
+    enc_stream << enc_param_buffer << endl;
+
+    enc_param_object.load(reinterpret_cast<const seal::seal_byte *>(enc_param_buffer), enc_size);
+
+	sealpir::PIRClient client(enc_param_object, pir_param_object);
+
+    BOOST_LOG_TRIVIAL(info) << "DONE!";
 
     // Generate galois keys
     galois_keys = pirclient_.generate_galois_keys();
@@ -213,6 +244,7 @@ void UserProgram::doEncryptionSetup() {
 error_cleanup:
     if (enc_param_buffer) free(enc_param_buffer);
     if (pir_param_buffer) free(pir_param_buffer);
+    if (pir_vector_buffer) free(pir_vector_buffer);
     close(socketfd_);
     BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
     exit(0);
