@@ -354,6 +354,7 @@ int main(int argc, char *argv[])
 
 
         // RYAN: Now, it is ready to accept the query request
+        
         // Below is the code I might want to use for querying
         /*
 
