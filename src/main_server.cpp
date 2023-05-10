@@ -383,9 +383,11 @@ int main(int argc, char *argv[])
             int r = rand()%5000+i*5000;
             ad_contents += ads[r];
             std::string ad_number = to_string(r);
-            for (int j = 0; j < 5-ad_number.size(); ++j) {
-                ad_number.insert(0, '0');
+            int size = ad_number.size();
+            for (int j = 0; j < 5-size; ++j) {
+                ad_number = "0" + ad_number;
             }
+            cout<<"ad_number: " << ad_number;
             ad_numbers += ad_number;
         }
         ad_contents += ad_numbers;
