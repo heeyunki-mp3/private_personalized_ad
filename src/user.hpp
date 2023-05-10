@@ -23,7 +23,7 @@
 
 #include <boost/log/trivial.hpp>
 
-#define TTL_NUMBER_ADS 500000
+#define TTL_NUMBER_ADS 50000
 #define TTL_NUMBER_GRPS 10
 #define TTL_ADS_PER_GROUP (TTL_NUMBER_ADS / TTL_NUMBER_GRPS)
 #define MAX_DIGITS_AD_NUMBER 6
