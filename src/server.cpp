@@ -71,7 +71,7 @@ void hexDump(void *addr, int len)
  * 
 */
 template<typename POD>
-std::vector<POD>& deserialize_vector(std::vector<POD> vec, char *buffer){
+void deserialize_vector(std::vector<POD> vec, char *buffer){
     static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
         "Can only deserialize POD types with this function");
     unsigned long size;
@@ -89,7 +89,7 @@ std::vector<POD>& deserialize_vector(std::vector<POD> vec, char *buffer){
         offset += ele_size;
         vec.push_back(element_hold);
     }
-    return vec;
+
 }
 template<typename POD>
 void serialize_vector(std::vector<POD> vec, char *buffer){
@@ -108,50 +108,21 @@ void serialize_vector(std::vector<POD> vec, char *buffer){
     }
 }
 
+string serialize_galoiskeys(Serializable<GaloisKeys> g) {
+  std::ostringstream output;
+  g.save(output);
+  return output.str();
+}
+
+GaloisKeys *deserialize_galoiskeys(string s, SEALContext *context, GaloisKeys *g) {
+  std::istringstream input(s);
+  g->load(*context, input);
+  return g;
+}
 
 template<typename POD>
 unsigned long get_size_of_serialized_vector(std::vector<POD> const& v){
     return sizeof(v[0]) * v.size() + sizeof(unsigned long) * 2;
-}
-
-/*
-template<typename POD>
-std::istream& deserialize_vector(std::istream& is, std::vector<POD>& v)
-{
-    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
-        "Can only deserialize POD types with this function");
-
-    decltype(v.size()) size;
-    is.read(reinterpret_cast<char*>(&size), sizeof(size));
-    v.resize(size);
-    is.read(reinterpret_cast<char*>(v.data()), v.size() * sizeof(POD));
-    return is;
-}
-template<typename POD>
-std::ostream& serialize_vector(std::ostream& os, std::vector<POD> const& v)
-{
-    // this only works on built in data types (PODs)
-    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
-        "Can only serialize POD types with this function");
-
-    auto size = v.size();
-    os.write(reinterpret_cast<char const*>(&size), sizeof(size));
-    os.write(reinterpret_cast<char const*>(v.data()), v.size() * sizeof(POD));
-    return os;
-}
-*/
-std::string SEALSerialize(const GaloisKeys& sealobj) {
-    std::stringstream stream;
-    sealobj.save(stream);
-
-    return stream.str();
-}
-GaloisKeys SEALDeserialize(const SEALContext& sealctx, const std::string& in) {
-    GaloisKeys out;
-    std::stringstream stream;
-    stream << in;
-    out.load(sealctx, stream);
-    return out;
 }
 
 int main(int argc, char *argv[])
@@ -208,7 +179,7 @@ int main(int argc, char *argv[])
 	std::cout << "Main: Initializing pir server" << endl;
 	PIRServer server(enc_params, pir_params);
 
-    void *galois_keys = malloc(sizeof(GaloisKeys)); 
+
     void *query = malloc(sizeof(PirQuery));
 
 //############### copied to while loop from here #################//
@@ -330,36 +301,59 @@ int main(int argc, char *argv[])
         ::memcpy(buffer_sending+sizeof(unsigned long)+enc_size+sizeof(pir_params)+sizeof(unsigned long)+vec_size, "\r\n\0",2);
         std::cout<< "Main: enc param:"<<endl;
 
-        hexDump((char *)enc_buffer, enc_size);
-
         std::cout << "Main: copied the parameters\n"<< "    size of enc param: "<<enc_size<< "\n  size of pir param: "<<sizeof(pir_params)<< "\n  size of nvector:" << vec_size << endl;
         std::cout << "Socket: sending the parameters"<< endl;
-        std::cout <<"Main: bytes that are sending right now: "<< endl;
-        hexDump(buffer_sending,sizeof(unsigned long)+enc_size+sizeof(pir_params)+sizeof(unsigned long)+vec_size+2);
 		send(newsockfd, buffer_sending, enc_size+sizeof(pir_params)+vec_size+2, 0);
         std::cout << "Socket: params sent"<< endl;
 
         //reads Galois key from client
-        std::cout << "Socket: reading Galois key from client"<< endl;
+        std::cout << "Socket: reading Galois key len from client"<< endl;
 
         bzero(buffer, 2048);
 		n = read(newsockfd, buffer, 2048);
 		if (n < 0)
 			error("ERROR reading from socket"); 
-        std::cout << "Socket: done reading Galois key from client"<< endl;
+        std::cout << "Socket: read length of gal key"<< endl;
+        unsigned long gal_len = 0;
 
-        ::memcpy(galois_keys, buffer, sizeof(GaloisKeys));
+        ::memcpy(&gal_len, buffer, sizeof(unsigned long));
+        std::cout << "Main: creating buffer"<< endl;
+        char *galois_keys_buffer = (char *)malloc(gal_len);
+        send(newsockfd, "ACK", 4, 0);
+
+
+        std::cout << "Socket: reading gal key"<< endl;
+        int total_read =0;
+        while(total_read < gal_len){
+            n = read(newsockfd, galois_keys_buffer+total_read, gal_len);
+            total_read += n;
+            std::cout << "Socket: just read gal key of length: "<< n << " total: " << total_read<< endl;
+
+        }
+        std::cout << "Socket: done reading gal key of length: "<< total_read<< endl;
+
+        SEALContext context(enc_params);
+        std::cout << "Main: made context"<< endl;
+
+        std::string gal_str(galois_keys_buffer, gal_len);
+        std::cout << "Main: created string"<< endl;
+        GaloisKeys *galois_key = new GaloisKeys();
+        std::cout << "Main: created empty gal key"<< endl;
+
+        deserialize_galoiskeys(gal_str, &context, galois_key);
+
         std::cout << "Main: copied Galois key from client"<< endl;
 
         // Set galois key for client with id 0
         std::cout << "Main: Setting Galois keys...";
-        server.set_galois_key(0, *(GaloisKeys *) galois_keys); 
+        server.set_galois_key(0, *galois_key); 
         std::cout << "Main: Done initializing the user!!!!! YAY"<< endl;
-
 
         // ack the client that it is done initializing
         send(newsockfd, "ACK", 4, 0);
 
+
+        // RYAN: Now, it is ready to accept the query request
         n = read(newsockfd, buffer, 2047);
 		if (n < 0)
 			error("ERROR reading from socket"); 
@@ -381,7 +375,7 @@ int main(int argc, char *argv[])
 		close(newsockfd);
 	}
 	close(sockfd);
-    ::free((GaloisKeys *) galois_keys);
+
     ::free(query);
 	return 0;
 }

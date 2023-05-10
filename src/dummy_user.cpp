@@ -29,7 +29,7 @@ using namespace seal;
  * 
 */
 template<typename POD>
-std::vector<POD>& deserialize_vector(std::vector<POD> vec, char *buffer){
+void deserialize_vector(std::vector<POD> vec, char *buffer){
     static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
         "Can only deserialize POD types with this function");
     unsigned long size;
@@ -47,7 +47,6 @@ std::vector<POD>& deserialize_vector(std::vector<POD> vec, char *buffer){
         offset += ele_size;
         vec.push_back(element_hold);
     }
-    return vec;
 }
 template<typename POD>
 void serialize_vector(std::vector<POD> vec, char *buffer){
@@ -66,6 +65,17 @@ void serialize_vector(std::vector<POD> vec, char *buffer){
     }
 }
 
+std::string serialize_galoiskeys(const GaloisKeys& sealobj) {
+    std::stringstream stream;
+    sealobj.save(stream);
+    return stream.str();
+}
+GaloisKeys *deserialize_galoiskeys(string s, SEALContext *context) {
+  GaloisKeys *g = new GaloisKeys();
+  std::istringstream input(s);
+  g->load(*context, input);
+  return g;
+}
 
 template<typename POD>
 unsigned long get_size_of_serialized_vector(std::vector<POD> const& v){
@@ -173,7 +183,6 @@ int main(int argc, char *argv[])
 	unsigned long pir_nvec_len = 0;
 
 	// Generates all parameters
-
 	//------ Socket -------
 	int sockfd, portno, n;
 	struct sockaddr_in serv_addr;
@@ -214,11 +223,6 @@ int main(int argc, char *argv[])
 	std::string paramString = "";
 	FILE *socketFile = fdopen(sockfd, "r");
 	std::cout << "Socket: opened read socket file" << endl;
-	/*while (fgets(buffer, 2047, socketFile)) {
-		paramString.append(buffer);
-	std::cout << "buffer: "<< paramString<< endl;
-	hexDump(buffer, 2047);
-	}*/
 
 	n = read(sockfd, buffer, 2047);
 
@@ -229,8 +233,7 @@ int main(int argc, char *argv[])
 		n = read(sockfd, buffer, 2047);
 	}
 	paramString.append(buffer);
-	std::cout << "buffer: " << paramString << endl;
-	hexDump(buffer, 2047);
+
 	std::cout << "Socket: recieved param" << endl;
 
 	std::cout << "Main: Initializing pir client"
@@ -249,21 +252,15 @@ int main(int argc, char *argv[])
 
 	std::cout << "Main: copied params" << endl;
 	std::cout << "vector buffer:" << endl;
-	hexDump(pir_vector_buffer, pir_nvec_len);
 
 	// turning the buffered bits into objects
 	// deserialzing pir object
 	PirParams pir_param_object;
 	memcpy(&pir_param_object, pir_param_buffer, sizeof(PirParams));
-	std::cout << "pir param:" << endl;
-	hexDump(&pir_param_object, sizeof(PirParams));
 	std::cout << "Main: copied pir param" << endl;
 
 	// deserializing pir.nvec
-
-
 	std::vector<std::uint64_t> nvec_hold;
-
 
 	deserialize_vector(nvec_hold, (char *)pir_vector_buffer);
 	std::cout << "Main: deserialized vector" << endl;
@@ -274,15 +271,9 @@ int main(int argc, char *argv[])
 
 	EncryptionParameters enc_param_object;
 	std::stringstream enc_stream;
-	hexDump(enc_param_buffer, enc_size);
-	std::cout << "Main: before streaming" <<endl;
     enc_stream << enc_param_buffer << endl;
-	std::cout << "Main: after streaming"<<endl;
 
     enc_param_object.load(reinterpret_cast<const seal_byte *>(enc_param_buffer), enc_size);
-
-	//enc_param_object.load(enc_stream);
-	std::cout << "Main: after loading"<<endl;
 
 	PIRClient client(enc_param_object, pir_param_object);
 
@@ -291,68 +282,32 @@ int main(int argc, char *argv[])
 	bzero(buffer, 2048);
 
 	std::cout << "Socket: sending galois key" << endl;
-	::memcpy(buffer, &galois_keys, sizeof(GaloisKeys));
-	n = write(sockfd, buffer, sizeof(GaloisKeys));
+	std::string galois_str = serialize_galoiskeys(galois_keys);
+	unsigned long gal_len = galois_str.size();
+
+	std::cout << "Socket: sending galois key len" << endl;
+
+	::memcpy(buffer, &gal_len, sizeof(unsigned long));
+	
+	n = write(sockfd, buffer, sizeof(unsigned long));
+	std::cout << "Socket: sent galois key len" << endl;
 
 	n = read(sockfd, buffer, 2047);
-	if (buffer[0] == 'A' && buffer[0] == 'C' && buffer[0] == 'K') {
+	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
+		std::cout << "Socket: received ACK for Galois key length" << endl;
+	}
+	std::cout << "Socket: sending galois key of length "<< gal_len << endl;
+
+	n = write(sockfd, galois_str.data(), gal_len);
+
+	std::cout <<"Socekt: done sending galois key"<<endl;
+
+	n = read(sockfd, buffer, 2047);
+	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
 		std::cout << "Main: done setting up!! yay" << endl;
 	}
-
+	// RYAN: ready to send  query
 	close(sockfd);
 	return 0;
 	//----- socket ends -----
-	/*
-
-
-
-		// Set galois key for client with id 0
-		cout << "Main: Setting Galois keys...";
-		server.set_galois_key(0, galois_keys);
-
-		// Measure database setup
-		server.set_database(move(db), number_of_items, size_per_item);
-		server.preprocess_database();
-		cout << "Main: database pre processed " << endl;
-
-		// Choose an index of an element in the DB
-		uint64_t ele_index = rd() % number_of_items; // element in DB at random position
-		uint64_t index = client.get_fv_index(ele_index); // index of FV plaintext
-		uint64_t offset = client.get_fv_offset(ele_index); // offset in FV plaintext
-		cout << "Main: element index = " << ele_index << " from [0, "
-		     << number_of_items - 1 << "]" << endl;
-		cout << "Main: FV index = " << index << ", FV offset = " << offset << endl;
-
-		// Measure query generation
-		PirQuery query = client.generate_query(index);
-		cout << "Main: query generated" << endl;
-
-		// To marshall query to send over the network, you can use
-		// serialize/deserialize: std::string query_ser = serialize_query(query);
-		// PirQuery query2 = deserialize_query(d, 1, query_ser, CIPHER_SIZE);
-
-		// Measure query processing (including expansion)
-		PirReply reply = server.generate_reply(query, 0);
-
-		// Measure response extraction
-		vector<uint8_t> elems = client.decode_reply(reply, offset);
-
-		assert(elems.size() == size_per_item);
-
-		bool failed = false;
-		// Check that we retrieved the correct element
-		for (uint32_t i = 0; i < size_per_item; i++) {
-			if (elems[i] != db_copy.get()[(ele_index * size_per_item) + i]) {
-				cout << "Main: elems " << (int)elems[i] << ", db "
-				     << (int)db_copy.get()[(ele_index * size_per_item) + i] << endl;
-				cout << "Main: PIR result wrong at " << i << endl;
-				failed = true;
-			}
-		}
-		if (failed) {
-			return -1;
-		}
-
-		return 0;
-	    */
 }
