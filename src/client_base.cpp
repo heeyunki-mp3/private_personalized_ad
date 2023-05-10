@@ -1,4 +1,6 @@
 #include <chrono>
+#include <cstdint>
+#include <filesystem>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -13,10 +15,9 @@
 
 using namespace std::chrono;
 
-void write_file(int sockfd){
+void write_file(int sockfd, const char* filename){
     int n;
     FILE *fp;
-    const char *filename = "ads_copy.csv";
     char buffer[SIZE];
 
     fp = fopen(filename, "w");
@@ -36,6 +37,8 @@ int main(int argc, char *argv[]){
     struct sockaddr_in server_addr, new_addr;
     socklen_t addr_size;
     struct hostent *server;
+    const char *filename = "ads_copy.csv";
+
     if (argc < 3) {
         fprintf(stderr, "usage %s hostname port\n", argv[0]);
         exit(0);
@@ -45,7 +48,7 @@ int main(int argc, char *argv[]){
         perror("Error in socket");
         exit(1);
     }
-    printf("Server socket created successfully.\n");
+    printf("Socket created successfully.\n");
     server = gethostbyname(argv[1]);
     if (server == NULL) {
         fprintf(stderr, "ERROR, no such host\n");
@@ -64,10 +67,12 @@ int main(int argc, char *argv[]){
         perror("Client: Could not connect to server socket");
     }
     n = write(sockfd, "OBTAIN", 6);
-    write_file(sockfd);
+    write_file(sockfd, filename);
     auto time_post_r = high_resolution_clock::now();
     auto time = duration_cast<microseconds>(time_post_r-time_pre_r).count();
     std::cout << "User: time of querying ads: " << time/1000 << " ms\n";
+    std::uintmax_t size = std::filesystem::file_size(filename);
+    std::cout << "User: ads file size: " << size << " bytes\n";
     printf("Data written in the file successfully.\n");
 
     return 0;
