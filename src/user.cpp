@@ -4,6 +4,27 @@ namespace user {
 
 /* GENERAL */
 
+template<typename POD>
+void deserialize_vector(std::vector<POD> vec, char *buffer){
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only deserialize POD types with this function");
+    unsigned long size;
+    unsigned long ele_size;
+    int offset = 0;
+
+    memcpy(&size, buffer, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    memcpy(&ele_size, buffer+offset, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+
+    for (int i=0; i<size; i++) {
+        POD element_hold;
+        memcpy(&element_hold, buffer + offset, ele_size);
+        offset += ele_size;
+        vec.push_back(element_hold);
+    }
+}
+
 UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
                          sealpir::PirParams pirParams) 
     : pirclient_(encryptionParams, pirParams), 
@@ -164,14 +185,25 @@ void UserProgram::doEncryptionSetup() {
     std::string paramString = "";
     void *enc_param_buffer = malloc(sizeof(seal::EncryptionParameters));
 	void *pir_param_buffer = malloc(sizeof(sealpir::PirParams));
-    if (!enc_param_buffer || !pir_param_buffer)
-        goto error_cleanup;
-    
+    if (!enc_param_buffer || !pir_param_buffer) {
+        if (enc_param_buffer) free(enc_param_buffer);
+        if (pir_param_buffer) free(pir_param_buffer);
+        if (pir_vector_buffer) free(pir_vector_buffer);
+        close(socketfd_);
+        BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
+        exit(0);
+    }
+
     // Tell server we want to do the encryption setup
     nBytes = write(socketfd_, "connect", 7);
 	if (nBytes < 0) {
 		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"connect\" to socket";
-        goto error_cleanup;
+        if (enc_param_buffer) free(enc_param_buffer);
+        if (pir_param_buffer) free(pir_param_buffer);
+        if (pir_vector_buffer) free(pir_vector_buffer);
+        close(socketfd_);
+        BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
+        exit(0);
     }
 
     // Read parameters from server
@@ -198,26 +230,36 @@ void UserProgram::doEncryptionSetup() {
 	std::memcpy(pir_param_buffer, buf + sizeof(unsigned long) + enc_size, sizeof(sealpir::PirParams));
 	std::memcpy(&pir_nvec_len, buf + sizeof(unsigned long) + enc_size + sizeof(sealpir::PirParams), sizeof(unsigned long));
 	pir_vector_buffer = malloc(pir_nvec_len);
-    if (!pir_vector_buffer)
-        goto error_cleanup;
+    if (!pir_vector_buffer) {
+        if (enc_param_buffer) free(enc_param_buffer);
+        if (pir_param_buffer) free(pir_param_buffer);
+        if (pir_vector_buffer) free(pir_vector_buffer);
+        close(socketfd_);
+        BOOST_LOG_TRIVIAL(error) << "Client: Encryption setup failed";
+        exit(0);
+    }
 	std::memcpy(pir_vector_buffer, buf + sizeof(unsigned long)+ enc_size + sizeof(sealpir::PirParams) + sizeof(unsigned long), pir_nvec_len);
     BOOST_LOG_TRIVIAL(info) << "Client: Copied params";
 	
 	std::memcpy(&pir_param_object, pir_param_buffer, sizeof(sealpir::PirParams));
 	std::vector<std::uint64_t> nvec_hold;
-	deserialize_vector(nvec_hold, (char *)pir_vector_buffer);
-	std::cout << "Main: deserialized vector" << endl;
+	deserialize_vector(nvec_hold, (char *) pir_vector_buffer);
+	BOOST_LOG_TRIVIAL(info) << "Client: Deserialized vector";
 	pir_param_object.nvec = nvec_hold;
 
-	seal::EncryptionParameters enc_param_object;
+	EncryptionParameters enc_param_object;
 	std::stringstream enc_stream;
     enc_stream << enc_param_buffer << endl;
+    BOOST_LOG_TRIVIAL(info) << "Client: Placed into enc_stream";
+    enc_param_object.load(reinterpret_cast<const seal_byte *>(enc_param_buffer), enc_size);
+	
+    BOOST_LOG_TRIVIAL(info) << "Client: Initializing client object";
+    sealpir::PIRClient client(enc_param_object, pir_param_object);
+    BOOST_LOG_TRIVIAL(info) << "Client: DONE!";
 
-    enc_param_object.load(reinterpret_cast<const seal::seal_byte *>(enc_param_buffer), enc_size);
 
-	sealpir::PIRClient client(enc_param_object, pir_param_object);
 
-    BOOST_LOG_TRIVIAL(info) << "DONE!";
+
 
     // Generate galois keys
     galois_keys = pirclient_.generate_galois_keys();

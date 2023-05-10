@@ -16,6 +16,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "serialization.h"
+#include "custom_serialization.hpp"
+
 using namespace seal;
 using namespace std::chrono;
 using namespace std;
@@ -25,6 +27,7 @@ void error(const char *msg)
 	perror(msg);
 	exit(1);
 }
+
 void hexDump(void *addr, int len) 
 {
     int i;

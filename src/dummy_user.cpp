@@ -22,7 +22,6 @@ using namespace std::chrono;
 using namespace std;
 using namespace seal;
 
-
 void error(const char *msg)
 {
 	perror(msg);

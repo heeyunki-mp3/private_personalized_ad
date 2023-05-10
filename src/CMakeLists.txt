@@ -11,7 +11,8 @@ add_library(sealpir pir.hpp pir.cpp pir_client.hpp pir_client.cpp pir_server.hpp
   pir_server.cpp)
 target_link_libraries(sealpir SEAL::seal_shared)
 
-add_library(adpir user.hpp user.cpp ad.hpp ad.cpp)
+add_library(adpir user.hpp user.cpp ad.hpp ad.cpp 
+  custom_serialization.cpp custom_serialization.hpp)
 target_link_libraries(adpir sealpir)
 
 add_executable(main_user main_user.cpp)

@@ -1,5 +1,4 @@
-
-
+#include "custom_serialization.hpp"
 
 /**
  * serialization:
@@ -7,26 +6,27 @@
  *   [size of vector]  [size of element]  [element 1][element 2]...
  * 
 */
-template<typename POD>
-void deserialize_vector(std::vector<POD> vec, char *buffer){
-    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
-        "Can only deserialize POD types with this function");
-    unsigned long size;
-    unsigned long ele_size;
-    int offset = 0;
+// template<typename POD>
+// void deserialize_vector(std::vector<POD> vec, char *buffer){
+//     static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+//         "Can only deserialize POD types with this function");
+//     unsigned long size;
+//     unsigned long ele_size;
+//     int offset = 0;
 
-    memcpy(&size, buffer, sizeof(unsigned long));
-    offset += sizeof(unsigned long);
-    memcpy(&ele_size, buffer+offset, sizeof(unsigned long));
-    offset += sizeof(unsigned long);
+//     memcpy(&size, buffer, sizeof(unsigned long));
+//     offset += sizeof(unsigned long);
+//     memcpy(&ele_size, buffer+offset, sizeof(unsigned long));
+//     offset += sizeof(unsigned long);
 
-    for (int i=0; i<size; i++) {
-        POD element_hold;
-        memcpy(&element_hold, buffer + offset, ele_size);
-        offset += ele_size;
-        vec.push_back(element_hold);
-    }
-}
+//     for (int i=0; i<size; i++) {
+//         POD element_hold;
+//         memcpy(&element_hold, buffer + offset, ele_size);
+//         offset += ele_size;
+//         vec.push_back(element_hold);
+//     }
+// }
+
 template<typename POD>
 void serialize_vector(std::vector<POD> vec, char *buffer){
     static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
@@ -49,6 +49,7 @@ std::string serialize_galoiskeys(const GaloisKeys& sealobj) {
     sealobj.save(stream);
     return stream.str();
 }
+
 GaloisKeys *deserialize_galoiskeys(string s, SEALContext *context) {
   GaloisKeys *g = new GaloisKeys();
   std::istringstream input(s);

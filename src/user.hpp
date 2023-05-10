@@ -17,8 +17,12 @@
 
 #include "ad.hpp"
 #include "pir_client.hpp"
+#include "custom_serialization.hpp"
 
 #include <boost/log/trivial.hpp>
+
+using namespace seal;
+using namespace sealpir;
 
 namespace user {
 
