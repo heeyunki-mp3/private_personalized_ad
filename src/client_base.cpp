@@ -1,3 +1,4 @@
+#include <chrono>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -9,6 +10,8 @@
 #include <iostream>
 #include <arpa/inet.h>
 #define SIZE 1024
+
+using namespace std::chrono;
 
 void write_file(int sockfd){
     int n;
@@ -29,7 +32,7 @@ void write_file(int sockfd){
 }
 
 int main(int argc, char *argv[]){
-    int sockfd, new_sock, portno, e;
+    int sockfd, new_sock, portno, n;
     struct sockaddr_in server_addr, new_addr;
     socklen_t addr_size;
     struct hostent *server;
@@ -56,24 +59,15 @@ int main(int argc, char *argv[]){
     bcopy((char *)server->h_addr,
           (char *)&server_addr.sin_addr.s_addr,
           server->h_length);
-
-    e = bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    if (e < 0) {
-        perror("Error in bind");
-        exit(1);
+    auto time_pre_r = high_resolution_clock::now();
+    if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+        perror("Client: Could not connect to server socket");
     }
-    printf("Binding successful.\n");
-
-    if (listen(sockfd, 10) == 0){
-        printf("Listening...\n");
-    } else {
-        perror("Error in listening");
-        exit(1);
-    }
-
-    addr_size = sizeof(new_addr);
-    new_sock = accept(sockfd, (struct sockaddr*)&new_addr, &addr_size);
-    write_file(new_sock);
+    n = write(sockfd, "OBTAIN", 6);
+    write_file(sockfd);
+    auto time_post_r = high_resolution_clock::now();
+    auto time = duration_cast<microseconds>(time_post_r-time_pre_r).count();
+    std::cout << "User: time of querying ads: " << time/1000 << " ms\n";
     printf("Data written in the file successfully.\n");
 
     return 0;
