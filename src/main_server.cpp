@@ -130,15 +130,31 @@ unsigned long get_size_of_serialized_vector(std::vector<POD> const& v){
 
 int main(int argc, char *argv[])
 {
-    int64_t num_items = 1<<10;
-    uint64_t item_size=288;
+    uint64_t item_size=32;
     uint32_t degree=4096;
 
-	uint64_t number_of_items = num_items;
 	uint64_t size_per_item = item_size; // in bytes
 	uint32_t N = degree;
 
-	// Recommended values: (logt, d) = (12, 2) or (8, 1).
+    string file_name = "ads.csv";
+
+    vector<string> ads;
+    string line;
+    uint64_t i = 0;
+
+    fstream file(file_name, ios::in);
+    if (file.is_open()) {
+        while (getline(file, line)) {
+            ads.push_back(line);
+            ++i;
+        }
+    } else {
+        cout<<"Could not open the file\n";
+    }
+    uint64_t number_of_items = i;
+    cout<<"number of items: " << number_of_items << "\n";
+
+    // Recommended values: (logt, d) = (12, 2) or (8, 1).
     uint32_t lt = 20;
     uint32_t dim = 1;
 
@@ -163,20 +179,17 @@ int main(int argc, char *argv[])
 	print_pir_params(pir_params);
 
 	std::cout << "Main: Initializing the database (this may take some time) ..." << endl;
-	// Create test database
-	auto db(make_unique<uint8_t[]>(number_of_items * size_per_item));
-
-	// Copy of the database. We use this at the end to make sure we retrieved
-	// the correct element.
-	auto db_copy(make_unique<uint8_t[]>(number_of_items * size_per_item));
-	random_device rd;
-	for (uint64_t i = 0; i < number_of_items; i++) {
-		for (uint64_t j = 0; j < size_per_item; j++) {
-			uint8_t val = rd() % 256;
-			db.get()[(i * size_per_item) + j] = val;
-			db_copy.get()[(i * size_per_item) + j] = val;
-		}
-	}
+	// Create database
+    auto db(make_unique<uint8_t[]>(number_of_items * size_per_item));
+    for (uint64_t i = 0; i < number_of_items; ++i) {
+        for (uint64_t j = 0; j < size_per_item; ++j) {
+            if (j < ads[i].size()) {
+                db.get()[(i * size_per_item) + j] = ads[i][j];
+            } else {
+                db.get()[(i * size_per_item) + j] = 0;
+            }
+        }
+    }
 
 	// Initialize PIR Server
 	std::cout << "Main: Initializing pir server" << endl;
@@ -355,6 +368,28 @@ int main(int argc, char *argv[])
         // ack the client that it is done initializing
         send(newsockfd, "ACK", 4, 0);
 
+        int obtain_len = 6;
+        char *obtain_buffer = (char *)malloc(obtain_len);
+        n = read(newsockfd, obtain_buffer, obtain_len);
+        if (n < 0)
+            error("ERROR reading from socket");
+        std::string obtain_str(obtain_buffer, obtain_len);
+        if (obtain_str.compare("OBTAIN") != 0) {
+            error("ERROR getting OBTAIN from user");
+        }
+
+        std::string ad_contents, ad_numbers;
+        for (int i = 0; i < 10; ++i) {
+            int r = rand()%5000+i*5000;
+            ad_contents += ads[r];
+            std::string ad_number = to_string(r);
+            for (int j = 0; j < 5-ad_number.size(); ++j) {
+                ad_number.insert(0, '0');
+            }
+            ad_numbers += ad_number;
+        }
+        ad_contents += ad_numbers;
+        send(newsockfd, ad_contents.data(), ad_contents.size(), 0);
 
         // RYAN: Now, it is ready to accept the query request
         // Below is the code I might want to use for querying
