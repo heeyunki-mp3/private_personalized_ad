@@ -29,10 +29,10 @@ cmake .
 cmake --build .
 ```
 
-The `main` executable will be located in a `bin` directory. Run this executable
-using:
+The executables will be located in a `bin` directory. For demonstration purposes, the client and server run locally and thus communicate using a port number. Note that the server must be created before the client. Run these executables using:
 
 ```bash
 cd bin
-./main
+./main_server <port>            # Creates a server instance
+./main_user <hostname> <port>   # Creates a client instance
 ```

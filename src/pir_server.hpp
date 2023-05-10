@@ -8,6 +8,8 @@
 #include <memory>
 #include <vector>
 
+namespace sealpir {
+
 class PIRServer {
 public:
   PIRServer(const seal::EncryptionParameters &enc_params,
@@ -55,3 +57,5 @@ private:
   void multiply_power_of_X(const seal::Ciphertext &encrypted,
                            seal::Ciphertext &destination, std::uint32_t index);
 };
+
+} // namespace sealpir

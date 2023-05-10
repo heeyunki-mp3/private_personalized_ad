@@ -2,8 +2,8 @@
 
 namespace user {
 
-Advertisement::Advertisement(uint64_t val) {
-    ad_ = val;
+Advertisement::Advertisement(const char *val) {
+    snprintf(ad_, 33, "%s", val);
 }
 
 Advertisement::~Advertisement() {

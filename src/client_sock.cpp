@@ -1,3 +1,5 @@
+// Source code from https://www.linuxhowtos.org/C_C++/socket.htm
+
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -8,7 +10,6 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
-
 
 void error(const char *msg)
 {

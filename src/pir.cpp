@@ -6,6 +6,8 @@ using namespace std;
 using namespace seal;
 using namespace seal::util;
 
+namespace sealpir {
+
 std::vector<std::uint64_t> get_dimensions(std::uint64_t num_of_plaintexts,
                                           std::uint32_t d) {
 
@@ -374,15 +376,11 @@ PirQuery deserialize_query(uint32_t d, uint32_t count, string s,
   return q;
 }
 
-string serialize_galoiskeys(Serializable<GaloisKeys> g) {
-  std::ostringstream output;
-  g.save(output);
-  return output.str();
-}
-
 GaloisKeys *deserialize_galoiskeys(string s, shared_ptr<SEALContext> context) {
   GaloisKeys *g = new GaloisKeys();
   std::istringstream input(s);
   g->load(*context, input);
   return g;
 }
+
+} // namespace sealpir

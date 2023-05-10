@@ -9,10 +9,10 @@ namespace user {
 class Advertisement {
 
 private:
-    uint64_t ad_;
+    char ad_[33];
 
 public:
-    Advertisement(uint64_t val);
+    Advertisement(const char *val);
     ~Advertisement();
     void printAd();
 }; // class Advertisement

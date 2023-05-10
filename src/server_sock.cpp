@@ -1,3 +1,5 @@
+// Source code from https://www.linuxhowtos.org/C_C++/socket.htm
+
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>

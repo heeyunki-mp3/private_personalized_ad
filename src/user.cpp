@@ -2,7 +2,32 @@
 
 namespace user {
 
-UserProgram::UserProgram() {
+/* GENERAL */
+
+template<typename POD>
+void deserialize_vector(std::vector<POD> vec, char *buffer){
+    static_assert(std::is_trivial<POD>::value && std::is_standard_layout<POD>::value,
+        "Can only deserialize POD types with this function");
+    unsigned long size;
+    unsigned long ele_size;
+    int offset = 0;
+
+    memcpy(&size, buffer, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+    memcpy(&ele_size, buffer+offset, sizeof(unsigned long));
+    offset += sizeof(unsigned long);
+
+    for (int i=0; i<size; i++) {
+        POD element_hold;
+        memcpy(&element_hold, buffer + offset, ele_size);
+        offset += ele_size;
+        vec.push_back(element_hold);
+    }
+}
+
+UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
+                         sealpir::PirParams pirParams) 
+    : cnts_({}) {
     // Assume the groupings are known to any computer that uses the ad server
     //
     // In our example:
@@ -10,7 +35,10 @@ UserProgram::UserProgram() {
     //      1 -- Book ads
     //      2 -- Sports ads
     //      3 -- Movie ads
-    for (unsigned int i = 0; i < 4; ++i)
+    //      ...
+    //      49 -- Toy ads
+    pirclient_ = NULL;
+    for (int i = 0; i < 50; ++i)
         cnts_[i] = 0;
 }
 
@@ -18,20 +46,11 @@ UserProgram::~UserProgram() {
     // Nothing to do here
 }
 
-unsigned int UserProgram::getGroupFromAdNumber(unsigned int no) {
-    // Assume this mapping is known to any computer that uses the ad server
-    //
-    // In our example:
-    //      0-99: Ad group 0
-    //      100-199: Ad group 1
-    //      200-299: Ad group 2
-    //      300-399: Ad group 3
-    return no / 100;
-}
-
-void UserProgram::run() {
+void UserProgram::_run(ModeType modeType) {
     // Obtain initial ad set
-    obtainInitialAdSet();
+    // This is already done in doSetup() if running with server
+    if (modeType == local)
+        obtainInitialAdSetLocal();
 
     // Runs forever
     unsigned int userSelection;
@@ -53,28 +72,37 @@ void UserProgram::run() {
         }
 
         // Update cnt_
-        updateCnts(userSelection);
-        updateAdSet();
+        updateCntsFromUserSelection(userSelection);
+        if (modeType == local)
+            updateAdSetLocal();
+        else
+            updateAdSetServer();
         printCnts();    // For testing
     }
 }
 
-uint64_t UserProgram::generateRandomInt64() {
-    return 0;
+void UserProgram::runLocal() {
+    ModeType modeType = local;
+    _run(modeType);
 }
 
-void UserProgram::obtainInitialAdSet() {
-    // TODO: Use SealPIR to update currAds_
-    // Currently, we just add one ad for each category
-    for (unsigned int i = 0; i < 400; i += 100) {
-        Advertisement ad(generateRandomInt64());
-        currAds_.insert({ i, ad });
-    }
+void UserProgram::runWithServer(char *hostname, char *port) {
+    doSetup(hostname, port);
+    ModeType modeType = server;
+    _run(modeType);
 }
 
-void UserProgram::updateAdSet() {
-    // TODO: Use SealPIR to update currAds_
-    // Currently, we don't make any updates
+/* UTILITY FUNCTIONS */
+
+unsigned int UserProgram::getGroupFromAdNumber(unsigned int no) {
+    // Assume this mapping is known to any computer that uses the ad server
+    //
+    // In our example:
+    //      0-99: Ad group 0
+    //      100-199: Ad group 1
+    //      200-299: Ad group 2
+    //      300-399: Ad group 3
+    return no / 100;
 }
 
 unsigned int UserProgram::getMostPopularAdGroup() {
@@ -92,8 +120,236 @@ unsigned int UserProgram::getMostPopularAdGroup() {
     return mostPopularGrp;
 }
 
-void UserProgram::updateCnts(unsigned int userSelection) {
+void UserProgram::updateCntsFromUserSelection(unsigned int userSelection) {
     ++cnts_[getGroupFromAdNumber(userSelection)];
+}
+
+/* FOR INTERFACING WITH SERVER */
+
+void UserProgram::updateAdSetServer() {
+
+}
+
+/* FOR SETUP WITH SERVER */
+
+void UserProgram::doSetup(char *hostname, char *port) {
+    // Set up socket connection
+    doSocketConnection(hostname, port);
+    doEncryptionSetup();
+    obtainInitialAdSetServer();
+}
+
+// References source code at https://www.linuxhowtos.org/C_C++/socket.htm
+void UserProgram::doSocketConnection(char *hostname, char *port) {
+    int sockfd, portno, n;
+	struct sockaddr_in serv_addr;
+	struct hostent *server;
+
+    portno = atoi(port);
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+		BOOST_LOG_TRIVIAL(error) << "Client: Could not open socket";
+        exit(0);
+    }
+	server = gethostbyname(hostname);
+	if (server == NULL) {
+		BOOST_LOG_TRIVIAL(error) << "Client: No such host";
+		exit(0);
+	}
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	bcopy((char *) server->h_addr,
+	      (char *) &serv_addr.sin_addr.s_addr,
+	      server->h_length);
+	serv_addr.sin_port = htons(portno);
+	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+		BOOST_LOG_TRIVIAL(error) << "Client: Could not connect to server socket";
+        exit(0);
+    }
+
+    // Update socketfd 
+    socketfd_ = sockfd;
+    BOOST_LOG_TRIVIAL(info) << "Client: Initial connection successful!";
+}
+
+void UserProgram::doEncryptionSetup() {
+    int n;
+    int64_t num_items = 1 << 10;
+	uint64_t item_size = 288;
+	uint32_t degree = 4096;
+
+	uint64_t number_of_items = num_items;
+	uint64_t size_per_item = item_size; // in bytes
+	uint32_t N = degree;
+
+	EncryptionParameters enc_params(scheme_type::bfv);
+	PirParams pir_params;
+
+	void *enc_param_buffer = malloc(sizeof(EncryptionParameters));
+	void *pir_param_buffer = malloc(sizeof(PirParams));
+	void *pir_vector_buffer;
+	unsigned long pir_nvec_len = 0;
+    char buffer[2048];
+
+	// cONNECT
+
+	n = write(socketfd_, "connect", 7);
+	if (n < 0)
+		BOOST_LOG_TRIVIAL(error) << "Client: Error writing to socket";
+	BOOST_LOG_TRIVIAL(info) << "Client: wrote connet to the server";
+	bzero(buffer, 2048);
+	// n = read(sockfd, buffer, 2047);
+
+	std::string paramString = "";
+	FILE *socketFile = fdopen(socketfd_, "r");
+	BOOST_LOG_TRIVIAL(info) << "Client: Opened read socket file";
+
+	n = read(socketfd_, buffer, 2047);
+
+	while (n == 2047) {
+		paramString.append(buffer);
+		std::cout << "buffer: " << paramString << endl;
+		hexDump(buffer, 2047);
+		n = read(socketfd_, buffer, 2047);
+	}
+	paramString.append(buffer);
+
+	std::cout << "Socket: recieved param" << endl;
+
+	std::cout << "Main: Initializing pir client"
+		  << "Enc size: " << sizeof(EncryptionParameters) << " pir size: " << sizeof(PirParams) << endl;
+
+	// copying the received information to local buffers
+	unsigned long enc_size;
+	::memcpy(&enc_size, buffer, sizeof(unsigned long));
+
+	::memcpy(enc_param_buffer, buffer+sizeof(unsigned long), enc_size);
+	::memcpy(pir_param_buffer, buffer +sizeof(unsigned long)+enc_size, sizeof(PirParams));
+	::memcpy(&pir_nvec_len, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams), sizeof(unsigned long));
+	pir_vector_buffer = malloc(pir_nvec_len);
+	printf("pir allocated at: %p with %ld size\n", pir_vector_buffer, pir_nvec_len);
+	::memcpy(pir_vector_buffer, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams) + sizeof(unsigned long), pir_nvec_len);
+
+	std::cout << "Main: copied params" << endl;
+	std::cout << "vector buffer:" << endl;
+
+	// turning the buffered bits into objects
+	// deserialzing pir object
+	PirParams pir_param_object;
+	memcpy(&pir_param_object, pir_param_buffer, sizeof(PirParams));
+	std::cout << "Main: copied pir param" << endl;
+
+	// deserializing pir.nvec
+	std::vector<std::uint64_t> nvec_hold;
+
+	deserialize_vector(nvec_hold, (char *)pir_vector_buffer);
+	std::cout << "Main: deserialized vector" << endl;
+	pir_param_object.nvec = nvec_hold;
+
+	my_print_pir_params(pir_param_object);
+
+	EncryptionParameters enc_param_object;
+	std::stringstream enc_stream;
+    enc_stream << enc_param_buffer << endl;
+
+    enc_param_object.load(reinterpret_cast<const seal_byte *>(enc_param_buffer), enc_size);
+
+	PIRClient client(enc_param_object, pir_param_object);
+    pirclient_ = &client;
+
+	std::cout << "Main: created galois key" << endl;
+	GaloisKeys galois_keys = client.generate_galois_keys();
+	bzero(buffer, 2048);
+
+	std::cout << "Socket: sending galois key" << endl;
+	std::string galois_str = serialize_galoiskeys(galois_keys);
+	unsigned long gal_len = galois_str.size();
+
+	std::cout << "Socket: sending galois key len" << endl;
+
+	::memcpy(buffer, &gal_len, sizeof(unsigned long));
+	
+	n = write(socketfd_, buffer, sizeof(unsigned long));
+	std::cout << "Socket: sent galois key len" << endl;
+
+	n = read(socketfd_, buffer, 2047);
+	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
+		std::cout << "Socket: received ACK for Galois key length" << endl;
+	}
+	std::cout << "Socket: sending galois key of length "<< gal_len << endl;
+
+	n = write(socketfd_, galois_str.data(), gal_len);
+
+	std::cout <<"Socekt: done sending galois key"<<endl;
+
+	n = read(socketfd_, buffer, 2047);
+	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
+		BOOST_LOG_TRIVIAL(info) << "Client: done setting up!! yay";
+	}
+}
+
+void UserProgram::obtainInitialAdSetServer() {
+    int nBytes, startByte;
+    char buf[512], tmpad[33], tmpno[6];
+    
+    // Tell server we want to obtain the initial ad set
+    nBytes = write(socketfd_, "obtain", 6);
+	if (nBytes < 0) {
+		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"obtain\" to socket";
+        exit(0);
+    }
+
+    // Read initial ad set from server
+    nBytes = read(socketfd_, buf, 512);
+    if (nBytes < 370) {         // 32 bytes for ad, 5 bytes for ad number
+        BOOST_LOG_TRIVIAL(error) << "Client: Could not read initial ad set from server";
+        exit(0);
+    }
+
+    // Set up initial ad set
+    vector<Advertisement> ads;  // Ordered
+    vector<unsigned int> adNos; // Ordered
+
+    // Parse advertisemeent
+    for (int i = 0; i < 10; ++i) {
+        startByte = i * 32;
+        bzero(tmpad, 33);
+        for (int j = 0; j < 32; ++j)
+            tmpad[j] = buf[startByte + j];
+        Advertisement ad(tmpad);
+        ads.push_back(ad);
+    }
+
+    // Parse ad numbers
+    for (int i = 0; i < 10; ++i) {
+        startByte = 320 + i * 5;
+        bzero(tmpno, 6);
+        for (int j = 0; j < 6; ++j)
+            tmpno[j] = buf[startByte + j];
+        unsigned int adNo = (unsigned int) atoi(tmpno);
+        adNos.push_back(adNo);
+    }
+
+    // Fill currAds_
+    for (int i = 0; i < 10; ++i)
+        currAds_.insert({ adNos[i], ads[i] });
+
+    BOOST_LOG_TRIVIAL(info) << "Client: Initial ad set obtained";
+}
+
+/* FOR LOCAL TESTING */
+
+void UserProgram::obtainInitialAdSetLocal() {
+    // Add one ad for each category
+    for (unsigned int i = 0; i < 400; i += 100) {
+        const char *adString = "abcdefghijklmnopqrstuvwxyzabcdef";  // 32 chars
+        Advertisement ad(adString);
+        currAds_.insert({ i, ad });
+    }
+}
+
+void UserProgram::updateAdSetLocal() {
+    // We don't make any updates when testing locally
 }
 
 void UserProgram::printCnts() {
