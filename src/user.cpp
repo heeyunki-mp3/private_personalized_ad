@@ -88,9 +88,9 @@ void UserProgram::runLocal() {
 }
 
 void UserProgram::runWithServer(char *hostname, char *port) {
-    doSetup(hostname, port);
-    ModeType modeType = server;
-    _run(modeType);
+    doSetup(hostname, port);        // TODO: Refactor (currently does everything)
+    // ModeType modeType = server;
+    // _run(modeType);
 }
 
 /* UTILITY FUNCTIONS */
@@ -176,11 +176,11 @@ void UserProgram::updateAdSetServer() {
 
 /* FOR SETUP WITH SERVER */
 
+// TODO: Currently does the running
 void UserProgram::doSetup(char *hostname, char *port) {
     // Set up socket connection
     doSocketConnection(hostname, port);
-    doEncryptionSetup();
-    obtainInitialAdSetServer();
+    doEncryptionSetup();            // TODO: Currently does the running
 }
 
 // References source code at https://www.linuxhowtos.org/C_C++/socket.htm
@@ -216,6 +216,7 @@ void UserProgram::doSocketConnection(char *hostname, char *port) {
     BOOST_LOG_TRIVIAL(info) << "Client: Initial connection successful!";
 }
 
+// TODO: Refactor (this currently does all the running too)
 void UserProgram::doEncryptionSetup() {
     int n;
     int64_t num_items = 1 << 10;
@@ -235,12 +236,12 @@ void UserProgram::doEncryptionSetup() {
 	unsigned long pir_nvec_len = 0;
     char buffer[2048];
 
-	// cONNECT
+	// Connect
 
 	n = write(socketfd_, "connect", 7);
 	if (n < 0)
 		BOOST_LOG_TRIVIAL(error) << "Client: Error writing to socket";
-	BOOST_LOG_TRIVIAL(info) << "Client: wrote connet to the server";
+	BOOST_LOG_TRIVIAL(info) << "Client: Wrote connet to the server";
 	bzero(buffer, 2048);
 	// n = read(sockfd, buffer, 2047);
 
@@ -259,7 +260,6 @@ void UserProgram::doEncryptionSetup() {
 	paramString.append(buffer);
 
 	// std::cout << "Socket: recieved param" << endl;
-
 	// std::cout << "Main: Initializing pir client"
 	// 	  << "Enc size: " << sizeof(EncryptionParameters) << " pir size: " << sizeof(PirParams) << endl;
 
@@ -267,13 +267,15 @@ void UserProgram::doEncryptionSetup() {
 	unsigned long enc_size;
 	::memcpy(&enc_size, buffer, sizeof(unsigned long));
 
-	::memcpy(enc_param_buffer, buffer+sizeof(unsigned long), enc_size);
-	::memcpy(pir_param_buffer, buffer +sizeof(unsigned long)+enc_size, sizeof(PirParams));
-	::memcpy(&pir_nvec_len, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams), sizeof(unsigned long));
+	::memcpy(enc_param_buffer, buffer + sizeof(unsigned long), enc_size);
+	::memcpy(pir_param_buffer, buffer + sizeof(unsigned long) + enc_size, 
+        sizeof(PirParams));
+	::memcpy(&pir_nvec_len, buffer + sizeof(unsigned long) + enc_size + 
+        sizeof(PirParams), sizeof(unsigned long));
 	pir_vector_buffer = malloc(pir_nvec_len);
 	// printf("pir allocated at: %p with %ld size\n", pir_vector_buffer, pir_nvec_len);
-	::memcpy(pir_vector_buffer, buffer +sizeof(unsigned long)+enc_size + sizeof(PirParams) + sizeof(unsigned long), pir_nvec_len);
-
+	::memcpy(pir_vector_buffer, buffer + sizeof(unsigned long) + enc_size  +
+        sizeof(PirParams) + sizeof(unsigned long), pir_nvec_len);
 	// std::cout << "Main: copied params" << endl;
 	// std::cout << "vector buffer:" << endl;
 
@@ -286,20 +288,20 @@ void UserProgram::doEncryptionSetup() {
 	// deserializing pir.nvec
 	std::vector<std::uint64_t> nvec_hold;
 
-	deserialize_vector(nvec_hold, (char *)pir_vector_buffer);
+	deserialize_vector(nvec_hold, (char *) pir_vector_buffer);
 	// std::cout << "Main: deserialized vector" << endl;
 	pir_param_object.nvec = nvec_hold;
-
 	// my_print_pir_params(pir_param_object);
 
 	EncryptionParameters enc_param_object;
 	std::stringstream enc_stream;
     enc_stream << enc_param_buffer << endl;
-
     enc_param_object.load(reinterpret_cast<const seal_byte *>(enc_param_buffer), enc_size);
 
+    // Initialize PIRClient
 	PIRClient client(enc_param_object, pir_param_object);
     pirclient_ = &client;
+    BOOST_LOG_TRIVIAL(info) << "Client: Initialized pirclient_";
 
 	// std::cout << "Main: created galois key" << endl;
 	GaloisKeys galois_keys = client.generate_galois_keys();
@@ -327,8 +329,41 @@ void UserProgram::doEncryptionSetup() {
 
 	n = read(socketfd_, buffer, 2047);
 	if (buffer[0] == 'A' && buffer[1] == 'C' && buffer[2] == 'K') {
-		BOOST_LOG_TRIVIAL(info) << "Client: done setting up!! yay";
-	}
+		BOOST_LOG_TRIVIAL(info) << "Client: Setup done";
+	} else {
+        BOOST_LOG_TRIVIAL(error) << "Client: Setup failed";
+        exit(0);
+    }
+
+    // TODO: THIS SHOULD BE IN THE RUN FUNCTION
+    // THIS SHOULD NOT BE CALLED FROM HERE
+    // WE JUST PUT IT HERE BECAUSE OF THE MALLOC ERROR
+
+    obtainInitialAdSetServer();
+    unsigned int userSelection;
+    BOOST_LOG_TRIVIAL(info) << "Client: Entering infinite loop";
+    while (true) {
+        // Interface with user
+        std::cout << "Here are the ads we have for you!" << std::endl;
+        for (auto a : currAds_) {
+            std::cout << "Ad " << a.first << ": ";
+            a.second.printAd();
+            std::cout << std::endl;
+        }
+        std::cout << "Click on an ad by entering its number: " << std::endl;
+        std::cin >> userSelection;
+        while (true) {
+            if ((currAds_.count(userSelection)) != 0)
+                break;
+            std::cout << "That was not a valid ad number: " << std::endl;
+            std::cin >> userSelection;
+        }
+
+        // Update cnt_
+        updateCntsFromUserSelection(userSelection);
+        updateAdSetServer();
+        printCnts();    // For testing
+    }
 }
 
 void UserProgram::obtainInitialAdSetServer() {
@@ -338,7 +373,7 @@ void UserProgram::obtainInitialAdSetServer() {
     char buf[512], tmpad[33], tmpno[6];
     
     // Tell server we want to obtain the initial ad set
-    nBytes = write(socketfd_, "obtain", 6);
+    nBytes = write(socketfd_, "OBTAIN", 6);
 	if (nBytes < 0) {
 		BOOST_LOG_TRIVIAL(error) << "Client: Could not write \"obtain\" to socket";
         exit(0);
