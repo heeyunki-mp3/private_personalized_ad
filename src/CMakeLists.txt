@@ -17,3 +17,9 @@ target_link_libraries(adpir sealpir)
 add_executable(main_user main_user.cpp)
 target_link_libraries(main_user adpir)
 target_link_libraries(main_user ${Boost_LIBRARIES})
+
+add_executable(server server.cpp)
+target_link_libraries(server adpir)
+
+add_executable(client dummy_user.cpp)
+target_link_libraries(client adpir)

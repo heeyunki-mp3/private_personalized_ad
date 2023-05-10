@@ -4,6 +4,7 @@ main_user
 main_server
 client
 server
+**/bin/*
 
 # Library files
 *.a
@@ -13,4 +14,4 @@ server
 **/CMakeFiles/
 **/*.cmake
 **/Makefile
-**/bin/
+src/Makefile
