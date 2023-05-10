@@ -9,10 +9,11 @@ namespace user {
 class Advertisement {
 
 private:
-    char ad_[33];
+    std::string ad_;
 
 public:
     Advertisement(const char *val);
+    Advertisement(std::string);
     ~Advertisement();
     void printAd();
 }; // class Advertisement

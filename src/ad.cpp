@@ -3,7 +3,14 @@
 namespace user {
 
 Advertisement::Advertisement(const char *val) {
-    snprintf(ad_, 33, "%s", val);
+    char ad___[33];
+    snprintf(ad___, 33, "%s", val);
+    std::string tmp(ad___);
+    ad_ = tmp;
+}
+
+Advertisement::Advertisement(std::string s) {
+    ad_ = s;
 }
 
 Advertisement::~Advertisement() {

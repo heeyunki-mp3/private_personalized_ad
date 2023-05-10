@@ -60,7 +60,8 @@ void UserProgram::_run(ModeType modeType) {
         std::cout << endl << endl;  // For spacing
         std::cout << "Here are the ads we have for you!" << std::endl;
         for (auto a : currAds_) {
-            std::cout << "Ad " << a.first << ": ";
+            std::cout << "Ad " << a.first << " (" << getGroupFromAdNumber(a.first)
+                << "): ";
             a.second.printAd();
             std::cout << std::endl;
         }
@@ -133,7 +134,7 @@ void UserProgram::updateCntsFromUserSelection(unsigned int userSelection) {
 /* FOR INTERFACING WITH SERVER */
 
 void UserProgram::removeLeastPopularAd() {
-    BOOST_LOG_TRIVIAL(info) << "Removing least popular ad";
+    BOOST_LOG_TRIVIAL(info) << "Client: Removing least popular ad";
 
     // Find least popular ad group
     unsigned int leastPopularGrp, leastPopularCnt;
@@ -174,17 +175,21 @@ void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsig
     /* Request ad from server */
 
     PirQuery query = pirclient_->generate_query(adRequested);
-    BOOST_LOG_TRIVIAL(info) << "Client: Query generated";
+    std::cout << std::endl;
+    std::cout << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "Client: Query generated for ad number " << adRequested;
+    uint64_t index = pirclient_->get_fv_index(adRequested);
+    uint64_t offset = pirclient_->get_fv_offset(adRequested);
     char buffer[4096];
     bzero(buffer, 4096);
     stringstream client_stream;
-    pirclient_->generate_serialized_query(adRequested, client_stream);
+    pirclient_->generate_serialized_query(index, client_stream);
     const std::string tmp = client_stream.str();
     const char *tmp_buffer;
     unsigned long tmp_len;
     tmp_buffer = tmp.data();
     tmp_len = tmp.size();
-    hexDump((char *)tmp_buffer,tmp_len);
+    // hexDump((char *)tmp_buffer,tmp_len);
 
     write(socketfd_, tmp_buffer, tmp_len);
     BOOST_LOG_TRIVIAL(info) << "Client: Sent query to server";
@@ -224,9 +229,15 @@ void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsig
 
     // context: the seal context initialized with parameters matching  SealPIRseal
     // e.g. seal::SEALContext(seal::EncryptionParameters{seal::scheme_type::bfv}, true)
-    seal::Plaintext elems = pirclient_->decode_reply(reply);
-
-    // TODO: Heeyun
+    vector<uint8_t> elems = pirclient_->decode_reply(reply, offset);
+    std::string adString = "";
+    for (auto a : elems) {
+        adString += (char) a;
+    }
+    BOOST_LOG_TRIVIAL(info) << "Client: Received ad: " << adString;
+    BOOST_LOG_TRIVIAL(info) << "Client: Ad number: " << adRequested;
+    Advertisement adtmp(adString);
+    currAds_.insert({ adRequested, adtmp });
 
     removeLeastPopularAd();
 }
@@ -399,6 +410,7 @@ void UserProgram::doEncryptionSetup() {
     obtainInitialAdSetServer();
     unsigned int userSelection;
     BOOST_LOG_TRIVIAL(info) << "Client: Entering infinite loop";
+    std::cout << std::endl << std::endl;
     while (true) {
         // Interface with user
         std::cout << "Here are the ads we have for you!" << std::endl;
@@ -426,8 +438,9 @@ void UserProgram::doEncryptionSetup() {
         auto time_pre_r = high_resolution_clock::now();
         updateAdSetServer(enc_param_object, adRequested);
         auto time_post_r = high_resolution_clock::now();
-        BOOST_LOG_TRIVIAL(info) << "Client: Total time spent processing SealPIR query: " <<
+        BOOST_LOG_TRIVIAL(info) << "Client: Total time for SealPIR query: " <<
             duration_cast<microseconds>(time_post_r-time_pre_r).count() / 1000 << " ms";
+        cout << std::endl << std::endl;
         printCnts();    // For testing
     }
 }
