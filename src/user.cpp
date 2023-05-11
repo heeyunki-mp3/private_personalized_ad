@@ -413,11 +413,15 @@ void UserProgram::doEncryptionSetup() {
     while (true) {
         // Interface with user
         std::cout << "Here are the ads we have for you!" << std::endl;
+        printf("+---------------------------------------------------------+\n"); 
+        printf("|%-10s|%-10s|%-35s|\n", "Ad ID", "Ad Group", "Ad data"); 
+        printf("+---------------------------------------------------------+\n"); 
+
         for (auto a : currAds_) {
-            std::cout << "Ad " << a.first << " (" << getGroupFromAdNumber(a.first) << "): ";
-            a.second.printAd();
-            std::cout << std::endl;
+            printf("|%-10d|%-10d|%-35s|\n", a.first, getGroupFromAdNumber(a.first),a.second.getAdString().data()); 
         }
+        printf("+---------------------------------------------------------+\n"); 
+
         std::cout << "Click on an ad by entering its number: " << std::endl;
         std::cin >> userSelection;
         while (true) {

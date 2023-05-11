@@ -22,4 +22,7 @@ void Advertisement::printAd() {
     std::cout << ad_;
 }
 
+std::string Advertisement::getAdString() {
+    return ad_;
+}
 } // namespace user

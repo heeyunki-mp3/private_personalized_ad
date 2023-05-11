@@ -16,6 +16,8 @@ public:
     Advertisement(std::string);
     ~Advertisement();
     void printAd();
+    std::string getAdString();
+
 }; // class Advertisement
 
 } // namespace user
