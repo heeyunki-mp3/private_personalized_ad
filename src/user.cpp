@@ -415,7 +415,7 @@ void UserProgram::doEncryptionSetup() {
         // Interface with user
         std::cout << "Here are the ads we have for you!" << std::endl;
         for (auto a : currAds_) {
-            std::cout << "Ad " << a.first << ": ";
+            std::cout << "Ad " << a.first << " (" << getGroupFromAdNumber(a.first) << "): ";
             a.second.printAd();
             std::cout << std::endl;
         }
