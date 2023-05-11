@@ -42,3 +42,17 @@ cd bin
 ./main_server <port>            # Creates a server instance
 ./main_user <hostname> <port>   # Creates a client instance
 ```
+
+## changing the length of the database
+If you are changing length of the database please update:
+1. `create_ads.py` line 6 
+    `for i in range(<# of line >)`
+
+2. `user.hpp` line 26 - 29
+    `#define TTL_NUMBER_ADS 50000`
+    `#define MAX_DIGITS_AD_NUMBER 6`
+
+3. `pir_param.nvec value`
+    Get the nvec value of pir param from server side, and put the number into 
+    `  std::vector<std::uint64_t> local_nvec = {160};`
+    
