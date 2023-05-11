@@ -26,7 +26,7 @@
 #define TTL_NUMBER_ADS 50000
 #define TTL_NUMBER_GRPS 10
 #define TTL_ADS_PER_GROUP (TTL_NUMBER_ADS / TTL_NUMBER_GRPS)
-#define MAX_DIGITS_AD_NUMBER 6
+#define MAX_DIGITS_AD_NUMBER 5
 
 using namespace seal;
 using namespace sealpir;
