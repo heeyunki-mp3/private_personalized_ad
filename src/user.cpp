@@ -210,13 +210,13 @@ void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsig
 
     BOOST_LOG_TRIVIAL(info) << "Client: Receiving actual reply ";
     n = read(socketfd_, reply_buffer, reply_size);
-    std::string reply_str(reply_buffer, reply_size);
     
     if (n < 0) {
         BOOST_LOG_TRIVIAL(error) << "Client: Could not read from socket";
-        exit(0);
+        return;
     }
     BOOST_LOG_TRIVIAL(info) << "Client: Deserializing actual reply ";
+    std::string reply_str(reply_buffer, n);
 
     // Deserialize reply
     std::stringstream istream;
