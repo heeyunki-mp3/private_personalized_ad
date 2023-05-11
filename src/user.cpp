@@ -25,8 +25,7 @@ void deserialize_vector(std::vector<POD> vec, char *buffer){
     }
 }
 
-UserProgram::UserProgram(seal::EncryptionParameters encryptionParams,
-                         sealpir::PirParams pirParams) 
+UserProgram::UserProgram() 
     : cnts_({}) {
     // Assume the groupings are known to any computer that uses the ad server
     //
@@ -196,14 +195,14 @@ void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsig
 
     bzero(buffer, 4096);
     unsigned long n;
-    BOOST_LOG_TRIVIAL(info) << "Client: receiving reply size";
+    BOOST_LOG_TRIVIAL(info) << "Client: Receiving reply size";
     int reply_size =0;
    
     n = read(socketfd_, &reply_size, sizeof(int));
     char *reply_buffer = (char *)malloc(reply_size);
     write(socketfd_, "ACK", 3);
 
-    BOOST_LOG_TRIVIAL(info) << "Client: receiving actual reply ";
+    BOOST_LOG_TRIVIAL(info) << "Client: Receiving actual reply ";
     n = read(socketfd_, reply_buffer, reply_size);
     std::string reply_str(reply_buffer, reply_size);
     
@@ -211,7 +210,7 @@ void UserProgram::updateAdSetServer(seal::EncryptionParameters enc_params, unsig
         BOOST_LOG_TRIVIAL(error) << "Client: Could not read from socket";
         exit(0);
     }
-    BOOST_LOG_TRIVIAL(info) << "Client: deserializing actual reply ";
+    BOOST_LOG_TRIVIAL(info) << "Client: Deserializing actual reply ";
 
     // Deserialize reply
     std::stringstream istream;
@@ -309,7 +308,7 @@ void UserProgram::doEncryptionSetup() {
 	n = write(socketfd_, "connect", 7);
 	if (n < 0)
 		BOOST_LOG_TRIVIAL(error) << "Client: Error writing to socket";
-	BOOST_LOG_TRIVIAL(info) << "Client: Wrote connet to the server";
+	BOOST_LOG_TRIVIAL(info) << "Client: Wrote connect to the server";
 	bzero(buffer, 2048);
 	// n = read(sockfd, buffer, 2047);
 
