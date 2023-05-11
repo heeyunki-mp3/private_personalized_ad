@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
             std::string longString = "";
             bzero(buffer, 2048);
             while ((n = read(newsockfd, buffer, 2048)) == 2048) {
-                cout << "Server: Makeing a read" << std::endl;
+                cout << "Server: Making a read" << std::endl;
                 std::string currString(buffer, n);
                 longString += currString;
                 bzero(buffer, 2048);
