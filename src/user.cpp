@@ -57,13 +57,19 @@ void UserProgram::_run(ModeType modeType) {
     while (true) {
         // Interface with user
         std::cout << endl << endl;  // For spacing
+        printf("===========================================================================\n"); 
+        std::cout << endl << endl;  // For spacing
+
         std::cout << "Here are the ads we have for you!" << std::endl;
+        printf("+---------------------------------------------------------+\n"); 
+        printf("|%-10s|%-10s|%-35s|\n", "Ad ID", "Ad Group", "Ad data"); 
+        printf("+---------------------------------------------------------+\n"); 
+
         for (auto a : currAds_) {
-            std::cout << "Ad " << a.first << " (" << getGroupFromAdNumber(a.first)
-                << "): ";
-            a.second.printAd();
-            std::cout << std::endl;
+            printf("|%-10d|%-10d|%-35s|\n", a.first, getGroupFromAdNumber(a.first),a.second.getAdString().data()); 
         }
+        printf("+---------------------------------------------------------+\n"); 
+
         std::cout << "Click on an ad by entering its number: " << std::endl;
         std::cin >> userSelection;
         while (true) {
@@ -412,6 +418,11 @@ void UserProgram::doEncryptionSetup() {
     std::cout << std::endl << std::endl;
     while (true) {
         // Interface with user
+        std::cout << endl << endl;  // For spacing
+
+        printf("===========================================================\n"); 
+        std::cout << endl << endl;  // For spacing
+
         std::cout << "Here are the ads we have for you!" << std::endl;
         printf("+---------------------------------------------------------+\n"); 
         printf("|%-10s|%-10s|%-35s|\n", "Ad ID", "Ad Group", "Ad data"); 
@@ -518,12 +529,21 @@ void UserProgram::updateAdSetLocal() {
 }
 
 void UserProgram::printCnts() {
-    std::cout << "Printing counts: " << std::endl;
+    std::cout << "Preferences: " << std::endl;
+
+    printf("+---------------------+\n"); 
+    printf("|%-10s|%-10s|\n", "Ad Group", "Frequency"); 
+    printf("+---------------------+\n"); 
+
+    for (auto a : cnts_) {
+        printf("|%-6s%-4d|%-10d|\n","Group ", a.first, a.second ); 
+    }
+    printf("+---------------------+\n"); 
+/*
     for (auto a : cnts_) {
         std::cout << "Ad group " << a.first << ": " << a.second << std::endl;
-    }
-    // For visual separation on the terminal
-    std::cout << std::endl << std::endl;
+    }*/
+
 }
 
 } // namespace user
