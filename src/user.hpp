@@ -53,7 +53,7 @@ private:
 
 public:
     /* General */
-    UserProgram(seal::EncryptionParameters, sealpir::PirParams);
+    UserProgram();
     ~UserProgram();
     void _run(ModeType modeType);                           // Not exposed
     void runLocal();                                        // Exposed

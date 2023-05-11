@@ -21,6 +21,7 @@ target_link_libraries(main_user ${Boost_LIBRARIES})
 
 add_executable(main_server main_server.cpp)
 target_link_libraries(main_server adpir)
+target_link_libraries(main_server ${Boost_LIBRARIES})
 
 add_executable(client_base client_base.cpp)
 add_executable(server_base server_base.cpp)

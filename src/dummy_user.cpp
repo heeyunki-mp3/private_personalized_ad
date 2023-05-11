@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 	n = write(sockfd, "connect", 7);
 	if (n < 0)
 		error("ERROR writing to socket");
-	cout << "Socket: wrote connet to the server" << endl;
+	cout << "Socket: wrote connect to the server" << endl;
 	bzero(buffer, 2048);
 	// n = read(sockfd, buffer, 2047);
 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 	std::cout << "Main: deserialized vector" << endl;
 	pir_param_object.nvec = nvec_hold;
 
-	my_print_pir_params(pir_param_object);
+	// my_print_pir_params(pir_param_object);
 
 	EncryptionParameters enc_param_object;
 	std::stringstream enc_stream;

@@ -43,16 +43,27 @@ cd bin
 ./main_user <hostname> <port>   # Creates a client instance
 ```
 
-## changing the length of the database
-If you are changing length of the database please update:
-1. `create_ads.py` line 6 
-    `for i in range(<# of line >)`
+## Changing the length of the database
 
-2. `user.hpp` line 26 - 29
-    `#define TTL_NUMBER_ADS 50000`
-    `#define MAX_DIGITS_AD_NUMBER 6`
+If you want to change the number of ads in the database, please update:
+
+1. `create_ads.py`
+```C
+for i in range(<# of ads >)    // line 6
+```
+
+2. `user.hpp` 
+```C
+#define TTL_NUMBER_ADS 50000    // line 26
+#define MAX_DIGITS_AD_NUMBER 6  // line 29
+```
 
 3. `pir_param.nvec value`
-    Get the nvec value of pir param from server side, and put the number into 
-    `  std::vector<std::uint64_t> local_nvec = {160};`
+
+The nvec value in the PIR params is tied to the number of entries in the database. After changing the size of the database, get the nvec value of the PIR param from server side by running a server instance and connecting a client instance to it. Then, put the number into 
+
+```C
+std::vector<std::uint64_t> local_nvec = {160};  // line 39
+                                                // also line 79
+```
     

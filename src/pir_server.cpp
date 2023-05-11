@@ -70,9 +70,9 @@ void PIRServer::set_database(const std::unique_ptr<const uint8_t[]> &bytes,
       ele_per_ptxt * coefficients_per_element(logt, ele_size);
   assert(coeff_per_ptxt <= N);
 
-  cout << "Elements per plaintext: " << ele_per_ptxt << endl;
-  cout << "Coeff per ptxt: " << coeff_per_ptxt << endl;
-  cout << "Bytes per plaintext: " << bytes_per_ptxt << endl;
+  // cout << "Elements per plaintext: " << ele_per_ptxt << endl;
+  // cout << "Coeff per ptxt: " << coeff_per_ptxt << endl;
+  // cout << "Bytes per plaintext: " << bytes_per_ptxt << endl;
 
   uint32_t offset = 0;
 
@@ -197,19 +197,19 @@ PirReply PIRServer::generate_reply(PirQuery &query, uint32_t client_id) {
   int logt = floor(log2(enc_params_.plain_modulus().value()));
 
   for (uint32_t i = 0; i < nvec.size(); i++) {
-    cout << "Server: " << i + 1 << "-th recursion level started " << endl;
+    // cout << "Server: " << i + 1 << "-th recursion level started " << endl;
 
     vector<Ciphertext> expanded_query;
 
     uint64_t n_i = nvec[i];
-    cout << "Server: n_i = " << n_i << endl;
-    cout << "Server: expanding " << query[i].size() << " query ctxts" << endl;
+    // cout << "Server: n_i = " << n_i << endl;
+    // cout << "Server: expanding " << query[i].size() << " query ctxts" << endl;
     for (uint32_t j = 0; j < query[i].size(); j++) {
       uint64_t total = N;
       if (j == query[i].size() - 1) {
         total = n_i % N;
       }
-      cout << "-- expanding one query ctxt into " << total << " ctxts " << endl;
+      // cout << "-- expanding one query ctxt into " << total << " ctxts " << endl;
       vector<Ciphertext> expanded_query_part =
           expand_query(query[i][j], total, client_id);
       expanded_query.insert(
@@ -218,7 +218,7 @@ PirReply PIRServer::generate_reply(PirQuery &query, uint32_t client_id) {
           std::make_move_iterator(expanded_query_part.end()));
       expanded_query_part.clear();
     }
-    cout << "Server: expansion done " << endl;
+    // cout << "Server: expansion done " << endl;
     if (expanded_query.size() != n_i) {
       cout << " size mismatch!!! " << expanded_query.size() << ", " << n_i
            << endl;
@@ -294,8 +294,8 @@ PirReply PIRServer::generate_reply(PirQuery &query, uint32_t client_id) {
       }
       product = intermediate_plain.size(); // multiply by expansion rate.
     }
-    cout << "Server: " << i + 1 << "-th recursion level finished " << endl;
-    cout << endl;
+    // cout << "Server: " << i + 1 << "-th recursion level finished " << endl;
+    // cout << endl;
   }
   cout << "reply generated!  " << endl;
   // This should never get here

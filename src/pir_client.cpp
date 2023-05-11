@@ -214,7 +214,7 @@ Plaintext PIRClient::decode_reply(PirReply &reply) {
       tempplain.push_back(ptxt);
 
 #ifdef DEBUG
-      cout << "recursion level : " << i << " noise budget :  ";
+      // cout << "recursion level : " << i << " noise budget :  ";
       cout << decryptor_->invariant_noise_budget(temp[j]) << endl;
 #endif
 
