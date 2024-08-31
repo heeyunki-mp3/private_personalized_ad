@@ -4,6 +4,8 @@
 
 In this repository, we present a demonstration of how private information retrieval (PIR) can be used to serve up personalized advertisements, without letting the centralized ad server collect data about the user's ad preferences.
 
+You can find a coherent explanation about the project [here](https://medium.com/@hk3187/can-you-keep-your-taste-to-yourself-fbfc7bb69442)
+
 For a brief introduction to the design of our system, refer to [this document](./DESIGN.md).
 
 Our system uses source code copied directly from SealPIR, which is a PIR research library developed by Microsoft. View the source code [here](https://github.com/microsoft/SealPIR).
